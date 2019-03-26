@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Interoperability</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cerulean.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/font-awesome-5.0.13/css/fa-svg-with-js.css" rel="stylesheet" />
+<script src="site_libs/font-awesome-5.0.13/js/fontawesome-all.min.js"></script>
+<script src="site_libs/font-awesome-5.0.13/js/fa-v4-shims.min.js"></script>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="styles.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Matt Schuchardt</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-houzz"></span>
+     
+    Data Science
+  </a>
+</li>
+<li>
+  <a href="demo.html">
+    <span class="fa fa-magic"></span>
+     
+    Predictive Modeling
+  </a>
+</li>
+<li>
+  <a href="data.html">
+    <span class="fa fa-chart-line"></span>
+     
+    Data Analysis &amp; Visualization
+  </a>
+</li>
+<li>
+  <a href="getstarted.html">
+    <span class="fa fa-r-project"></span>
+     
+    Get StaRted
+  </a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://www.linkedin.com/in/mattschuchardt/">
+    <span class="fa fa-linkedin"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="https://mschuchardt/github.io">
+    <span class="fa fa-github"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Interoperability</h1>
+
+</div>
+
+
+<p>Visualizing interoperability challenges using two publicly available data sets from the Centers for Medicare and Medicaid Services:<br />
+1. <a href="https://dashboard.healthit.gov/datadashboard/documentation/ehr-products-mu-attestation-data-documentation.php">EHR Products Used for Meaningful Use Attestation</a><br />
+2. <a href="https://data.medicare.gov/Physician-Compare/Physician-Compare-National-Downloadable-File/mj5m-pzi6">Physician Compare National Downloadable File</a></p>
+<p>Interoperability impacts healthcare providers, health systems and patients.</p>
+<p>While the US healthcare system has made impressive strides in the last 5 years, there is still a long way to go.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># meaningful use reports ----</span>
+<span class="co"># cms api url</span>
+url.mu &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;http://dashboard.healthit.gov/datadashboard/&quot;</span>,
+                 <span class="st">&quot;data/MU_REPORT.csv&quot;</span>)
+
+<span class="co"># read Meaningful Use report direct from CMS</span>
+mu &lt;-<span class="st"> </span><span class="kw">fread</span>(url.mu)
+
+total.attest &lt;-<span class="st"> </span><span class="kw">nrow</span>(mu)
+
+<span class="co"># create attestation date from date components</span>
+mu[, attested <span class="op">:</span><span class="er">=</span><span class="st"> </span>lubridate<span class="op">::</span><span class="kw">make_date</span>(
+  <span class="kw">as.numeric</span>(Attestation_Year),
+  <span class="kw">as.numeric</span>(Attestation_Month),
+  1L)]
+
+<span class="co"># clean character variables</span>
+mu[, Vendor_Name <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">str_conv</span>(Vendor_Name, <span class="st">&quot;latin1&quot;</span>)]
+mu[, EHR_Product_Name <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">str_conv</span>(EHR_Product_Name, <span class="st">&quot;latin1&quot;</span>)]
+mu[, Product_Classification <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">ifelse</span>(Product_Classification <span class="op">==</span><span class="st"> &quot;&quot;</span>,
+                                      <span class="st">&quot;Complete EHR&quot;</span>,
+                                      Product_Classification)]
+mu[, Product_Setting <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">ifelse</span>(Product_Setting <span class="op">==</span><span class="st"> &quot;&quot;</span> <span class="op">&amp;</span>
+<span class="st">                                 </span>Provider_Type <span class="op">==</span><span class="st"> &quot;EP&quot;</span>,
+                               <span class="st">&quot;Ambulatory&quot;</span>,
+                               <span class="kw">ifelse</span>(Product_Setting <span class="op">==</span><span class="st"> &quot;&quot;</span> <span class="op">&amp;</span>
+<span class="st">                                 </span>Provider_Type <span class="op">!=</span><span class="st"> &quot;EP&quot;</span>,
+                                 <span class="st">&quot;Inpatient&quot;</span>,
+                                 Product_Setting))]
+mu[, CCN <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">nchar</span>(CCN) <span class="op">==</span><span class="st"> </span><span class="dv">5</span>,
+                      <span class="kw">paste0</span>(<span class="st">&quot;0&quot;</span>, CCN),
+                      <span class="kw">as.character</span>(CCN))]
+
+mu.ids &lt;-<span class="st"> </span><span class="kw">unique</span>(mu[<span class="op">!</span><span class="kw">is.na</span>(CCN),.(NPI, CCN)])
+<span class="co"># calculate primary &amp; secondary EMR vendors</span>
+<span class="co"># based on number of complete installs by provider type</span>
+vend.rank &lt;-<span class="st"> </span>mu <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(Provider_Type, Product_Classification, Vendor_Name) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">spread</span>(Product_Classification, n, <span class="dt">fill =</span> <span class="dv">0</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Primary =</span> <span class="kw">ifelse</span>(<span class="st">`</span><span class="dt">Complete EHR</span><span class="st">`</span> <span class="op">&gt;</span><span class="st"> `</span><span class="dt">Modular EHR</span><span class="st">`</span>,
+                          <span class="st">&quot;Primary&quot;</span>,
+                          <span class="st">&quot;Secondary&quot;</span>),
+         <span class="dt">Total =</span> <span class="st">`</span><span class="dt">Complete EHR</span><span class="st">`</span> <span class="op">+</span><span class="st"> `</span><span class="dt">Modular EHR</span><span class="st">`</span>)
+
+<span class="co"># flatten to a single row per NPI per attestation</span>
+mu &lt;-<span class="st"> </span>mu <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Type =</span> <span class="kw">ifelse</span>(Specialty <span class="op">==</span><span class="st"> &quot;&quot;</span>,
+                       Hospital_Type,
+                       Specialty)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(NPI,
+         attested,
+         Program_Year,
+         Vendor_Name,
+         Type,
+         Provider_Type,
+         Product_Setting,
+         Product_Classification,
+         attested,
+         ZIP,
+         Business_State_Territory) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">left_join</span>(vend.rank <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">              </span><span class="kw">select</span>(Provider_Type,
+                     Vendor_Name,
+                     <span class="dt">PrimaryCount =</span> <span class="st">`</span><span class="dt">Complete EHR</span><span class="st">`</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">unique</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(NPI,
+           attested,
+           Program_Year,
+           Provider_Type,
+           Product_Classification) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Primary =</span> <span class="kw">ifelse</span>(PrimaryCount <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(PrimaryCount),
+                          <span class="st">&quot;Primary&quot;</span>, <span class="st">&quot;Secondary&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(NPI,
+           attested,
+           Program_Year,
+           Provider_Type,
+           Product_Classification,
+           Primary) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(PrimaryCount <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(PrimaryCount)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>PrimaryCount) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(<span class="kw">row_number</span>() <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">spread</span>(Primary, Vendor_Name)
+
+mu &lt;-<span class="st"> </span>mu <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">left_join</span>(mu.ids)
+
+<span class="kw">setDT</span>(mu)
+<span class="kw">setindexv</span>(mu, <span class="kw">c</span>(<span class="st">&quot;NPI&quot;</span>, <span class="st">&quot;CCN&quot;</span>))</code></pre></div>
+<div id="meaningful-use-report" class="section level1">
+<h1>Meaningful Use Report</h1>
+<p>361,763 Eligible Providers and 4,675 Eligible Hospitals attested to meaningful use of Electronic Health Records. The meaningful use data contains 1,934,819 records. Duplicates are the primary difficulty in working with the data. Providers attesting with modular EHR solutions have multiple rows per attestation, which is complicated by providers making multiple attestations for multiple program years at multiple locations.</p>
+<p>To reduce the duplication, the vendor(s) for each provider and attestation were tagged as primary or secondary. The primary/secondary determination was made based on the number of attestations, by product and provider type, made for each of the 991 vendors.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># hospital affiliations ----</span>
+<span class="co"># Get Physician Compare data via API call to CMS</span>
+<span class="co"># will read in all variables as character as CCN5 screws up </span>
+<span class="co"># vartype hueristics</span>
+cls &lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="st">&quot;character&quot;</span>, <span class="dv">41</span>)
+
+<span class="co"># call data directly from CMS</span>
+aff.hosp &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;https://data.medicare.gov/api/views/mj5m-pzi6/rows.csv?accessType=DOWNLOAD&quot;</span>, <span class="dt">colClasses =</span> cls)
+
+total.docs &lt;-<span class="st"> </span><span class="kw">nrow</span>(aff.hosp)
+
+<span class="co"># affiliated column names</span>
+ccn &lt;-<span class="st"> </span><span class="kw">paste</span>(<span class="st">&quot;Hospital affiliation CCN&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>)
+lbn &lt;-<span class="st"> </span><span class="kw">paste</span>(<span class="st">&quot;Hospital affiliation LBN&quot;</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>)
+
+<span class="co"># variables of interest</span>
+<span class="co"># limiting identifing variables to Ids</span>
+Vars &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;NPI&quot;</span>,
+          ccn,
+          lbn)
+
+<span class="co"># limit to target variables</span>
+aff.hosp &lt;-<span class="st"> </span>aff.hosp[, Vars, with =<span class="st"> </span><span class="ot">FALSE</span>]
+
+<span class="co"># prepare NPI for matching</span>
+aff.hosp &lt;-<span class="st"> </span>aff.hosp[, NPI <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">as.integer</span>(NPI)]
+
+<span class="co"># limit to unique NPI</span>
+aff.hosp &lt;-<span class="st"> </span><span class="kw">unique</span>(aff.hosp, <span class="dt">by =</span> Vars)
+
+<span class="co"># reshape data----</span>
+<span class="co"># melt is the equivalent of gather/pivot</span>
+aff.hosp &lt;-<span class="st"> </span><span class="kw">melt</span>(aff.hosp, <span class="dt">measure =</span> <span class="kw">patterns</span>(<span class="st">&quot;CCN&quot;</span>,
+                                              <span class="st">&quot;LBN&quot;</span>),
+                 <span class="dt">value.name =</span> <span class="kw">c</span>(<span class="st">&quot;MedicareNumber&quot;</span>,
+                                <span class="st">&quot;Hospital&quot;</span>))
+aff.hosp[,variable <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="ot">NULL</span>]
+
+<span class="co"># limit to providers reporting affiliations</span>
+aff.hosp &lt;-<span class="st"> </span>aff.hosp[MedicareNumber <span class="op">!=</span><span class="st"> &quot;&quot;</span>,]</code></pre></div>
+</div>
+<div id="physician-compare" class="section level1">
+<h1>Physician Compare</h1>
+<p>662,849 Providers reported affiliations with 4,737 hospitals to CMS. The physician compare data contains 2,033,326 records. In addition to duplicates based on multiple practice locations, the hospital affiliation data is stored in 5 sets of name/Id columns. The data.table package was used to manipulate the name and Id columns simultaneously. That data.table is memory efficient and fast is a bonus.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu &lt;-<span class="st"> </span>mu[mu[, .I[attested <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(attested)],
+                          by =<span class="st"> </span>NPI]<span class="op">$</span>V1
+                  ][NPI <span class="op">%in%</span><span class="st"> </span>
+<span class="st">                    </span><span class="kw">unique</span>(aff.hosp<span class="op">$</span>NPI) <span class="op">|</span>
+<span class="st">                    </span>CCN <span class="op">%in%</span><span class="st"> </span>
+<span class="st">                    </span><span class="kw">unique</span>(aff.hosp<span class="op">$</span>MedicareNumber)
+                    ][attested <span class="op">&gt;</span><span class="st"> &quot;2015-12-31&quot;</span>]
+
+aff.mu.vnd &lt;-<span class="st"> </span>aff.hosp <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">inner_join</span>(aff.mu <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">              </span><span class="kw">select</span>(NPI,
+                     Primary,
+                     Secondary), <span class="dt">by =</span> <span class="st">&quot;NPI&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unique</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">inner_join</span>(aff.mu <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">              </span><span class="kw">select</span>(<span class="dt">MedicareNumber =</span> CCN,
+                     Primary,
+                     Secondary),
+            <span class="dt">by =</span> <span class="st">&quot;MedicareNumber&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unique</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(Primary.y) <span class="op">&amp;</span><span class="st"> </span><span class="op">!</span><span class="kw">is.na</span>(Primary.x)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Secondary.y =</span> <span class="kw">ifelse</span>(<span class="kw">is.na</span>(Secondary.y), <span class="st">&quot;None&quot;</span>,
+                              Secondary.y),
+         <span class="dt">Secondary.x =</span> <span class="kw">ifelse</span>(<span class="kw">is.na</span>(Secondary.x), <span class="st">&quot;None&quot;</span>,
+                              Secondary.x),
+         <span class="dt">InterOp =</span> Primary.x <span class="op">==</span><span class="st"> </span>Primary.y <span class="op">|</span>
+<span class="st">           </span>Secondary.y <span class="op">!=</span><span class="st"> &quot;None&quot;</span> <span class="op">&amp;</span>
+<span class="st">           </span>Primary.x <span class="op">==</span><span class="st"> </span>Secondary.y <span class="op">|</span>
+<span class="st">           </span>Secondary.x <span class="op">!=</span><span class="st"> &quot;None&quot;</span> <span class="op">&amp;</span>
+<span class="st">           </span>Secondary.x <span class="op">==</span><span class="st"> </span>Secondary.y)
+
+<span class="kw">rm</span>(aff.hosp)
+q.gc &lt;-<span class="st"> </span><span class="kw">q_gc</span>()
+
+aff.mu.avg &lt;-<span class="st"> </span>aff.mu.vnd <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(MedicareNumber) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">Affiliated =</span> <span class="kw">n_distinct</span>(NPI),
+            <span class="dt">Vendors =</span> <span class="kw">n_distinct</span>(Primary.x),
+            <span class="dt">InterOp =</span> <span class="kw">mean</span>(InterOp))
+
+aff.mu.npi &lt;-<span class="st"> </span>aff.mu.vnd <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(NPI) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">Affiliated =</span> <span class="kw">n_distinct</span>(MedicareNumber),
+            <span class="dt">Vendors =</span> <span class="kw">n_distinct</span>(Primary.y),
+            <span class="dt">InterOp =</span> <span class="kw">mean</span>(InterOp))</code></pre></div>
+<p>Since January 2016 198,113 providers reported their EHR vendor and affiliation with at least one of 4,137 hospitals.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.disp &lt;-<span class="st"> </span>aff.mu.vnd <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(InterOp <span class="op">==</span><span class="st"> </span>F) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(NPI) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">Vendors =</span> <span class="kw">n_distinct</span>(Primary.y),
+            <span class="dt">Affiliations =</span> <span class="kw">n_distinct</span>(MedicareNumber))</code></pre></div>
+<div id="hospitals" class="section level2">
+<h2>Hospitals</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(aff.mu.avg, <span class="kw">aes</span>(Affiliated, Vendors))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_jitter</span>(<span class="dt">shape =</span> <span class="st">&quot;.&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_smooth</span>(<span class="dt">size =</span> <span class="fl">1.25</span>,
+              <span class="dt">span =</span> <span class="dv">1</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">50</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_x_log10</span>(<span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1000</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Increasing Affilated Physicians increases EHRs&quot;</span>,
+       <span class="dt">subtitle =</span> 
+         <span class="kw">paste0</span>(<span class="st">&quot;Hospitals with large numbers of affiliated&quot;</span>,
+                <span class="st">&quot;</span><span class="ch">\n</span><span class="st">physicians have to interact with large numbers&quot;</span>,
+                <span class="st">&quot;of EHRs&quot;</span>),
+       <span class="dt">x =</span> <span class="st">&quot;log10(Affiliated Physicians)&quot;</span>,
+       <span class="dt">y =</span> <span class="st">&quot;Physician EHR Vendors&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<p><img src="data_files/figure-html/sct-1.png" width="672" /></p>
+<div id="by-ehr-vendor" class="section level3">
+<h3>By EHR vendor</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.vnd <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Primary.y =</span> <span class="kw">case_when</span>(<span class="kw">str_detect</span>(Primary.y, 
+                                          <span class="st">&quot;MEDITECH&quot;</span>) <span class="op">~</span><span class="st"> &quot;MEDITECH&quot;</span>,
+                               <span class="kw">str_detect</span>(Primary.y,
+                                          <span class="st">&quot;CPSI&quot;</span>) <span class="op">~</span><span class="st"> &quot;CPSI&quot;</span>,
+                               <span class="kw">str_detect</span>(Primary.y,
+                                          <span class="st">&quot;McKesson&quot;</span>) <span class="op">~</span><span class="st"> &quot;Allscripts&quot;</span>,
+                               <span class="ot">TRUE</span> <span class="op">~</span><span class="st"> </span>
+<span class="st">                                 </span><span class="kw">str_remove_all</span>(Primary.y,
+                                                <span class="st">&quot; Corporation&quot;</span>))) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(MedicareNumber, Primary.y) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">Affiliated =</span> <span class="kw">n_distinct</span>(NPI),
+            <span class="dt">Vendors =</span> <span class="kw">n_distinct</span>(Primary.x)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Vendor =</span> <span class="kw">fct_lump</span>(Primary.y, <span class="dt">n =</span> <span class="dv">5</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Affiliated, Vendors))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_jitter</span>(<span class="dt">shape =</span> <span class="st">&quot;.&quot;</span>, <span class="dt">alpha =</span> <span class="dv">2</span><span class="op">/</span><span class="dv">3</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_smooth</span>(<span class="kw">aes</span>(<span class="dt">color =</span> Vendor), 
+              <span class="dt">fullrange =</span> F,
+              <span class="dt">span =</span> <span class="dv">1</span>,
+              <span class="dt">se =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_x_log10</span>()<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_color_brewer</span>(<span class="dt">palette =</span> <span class="st">&quot;Set2&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">guides</span>(<span class="dt">color =</span> <span class="kw">guide_legend</span>(<span class="dt">title =</span> <span class="st">&quot;Hospital</span><span class="ch">\n</span><span class="st">Vendor&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Hospital Vendor Impact&quot;</span>,
+       <span class="dt">subtitle =</span> <span class="st">&quot;Detail view&quot;</span>,
+       <span class="dt">x =</span> <span class="st">&quot;log10(Affiliated Physicians)&quot;</span>,
+       <span class="dt">y =</span> <span class="st">&quot;Physician EHR Vendors&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">coord_cartesian</span>(<span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">500</span>),
+                  <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">25</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<p><img src="data_files/figure-html/byvend-1.png" width="672" /></p>
+</div>
+</div>
+<div id="providers" class="section level2">
+<h2>Providers</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.vnd <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(NPI <span class="op">%in%</span><span class="st"> </span>aff.mu.npi[aff.mu.npi<span class="op">$</span>Affiliated <span class="op">==</span><span class="st"> </span><span class="dv">1</span>,]<span class="op">$</span>NPI) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(InterOp) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(<span class="kw">round</span>(n <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(n), <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>, <span class="st">&quot;%&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(InterOp, n))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> InterOp), <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">label =</span> label),
+            <span class="dt">nudge_y =</span> <span class="op">-</span><span class="dv">3000</span>,
+            <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>,
+            <span class="dt">size =</span> <span class="dv">5</span>,
+            <span class="dt">color =</span> <span class="st">&quot;#FFFFFF&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_fill_brewer</span>(<span class="dt">palette =</span> <span class="st">&quot;Set1&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> 
+         <span class="kw">paste</span>(<span class="kw">comma</span>(<span class="kw">nrow</span>(aff.mu.npi[aff.mu.npi<span class="op">$</span>Affiliated <span class="op">==</span>
+<span class="st">                                       </span><span class="dv">1</span>,])),
+       <span class="st">&quot;Physicians reporting a single affiliation&quot;</span>),
+       <span class="dt">y =</span> <span class="st">&quot;Physicians&quot;</span>,
+       <span class="dt">x =</span> <span class="st">&quot;Reported Use of same EHR as Affiliated Hospital&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))
+
+aff.mu.npi <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(Affiliated <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Same =</span> InterOp <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(Same) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n_distinct</span>(NPI)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(<span class="kw">round</span>(n <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(n), <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>, <span class="st">&quot;%&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Same, n))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> Same), <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">label =</span> label),
+            <span class="dt">nudge_y =</span> <span class="op">-</span><span class="dv">3000</span>,
+            <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>,
+            <span class="dt">size =</span> <span class="dv">5</span>,
+            <span class="dt">color =</span> <span class="st">&quot;#FFFFFF&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_fill_brewer</span>(<span class="dt">palette =</span> <span class="st">&quot;Set1&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> 
+         <span class="kw">paste</span>(<span class="kw">comma</span>(<span class="kw">nrow</span>(aff.mu.npi[aff.mu.npi<span class="op">$</span>Affiliated <span class="op">!=</span>
+<span class="st">                                       </span><span class="dv">1</span>,])),
+       <span class="st">&quot;Physicians reporting multiple affiliations&quot;</span>),
+       <span class="dt">y =</span> <span class="st">&quot;Physicians&quot;</span>,
+       <span class="dt">x =</span> <span class="kw">paste0</span>(<span class="st">&quot;Reported Use of same EHR &quot;</span>,
+                  <span class="st">&quot;as at least 1 Affiliated Hospital&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<p><img src="data_files/figure-html/physplots-1.png" width="45%" /><img src="data_files/figure-html/physplots-2.png" width="45%" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.disp <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Vendors =</span> <span class="kw">case_when</span>(Affiliations <span class="op">==</span><span class="st"> </span><span class="dv">5</span> <span class="op">&amp;</span>
+<span class="st">                               </span>Vendors <span class="op">&gt;</span><span class="st"> </span><span class="dv">5</span> <span class="op">~</span><span class="st"> </span><span class="fl">5.0</span>,
+                             Affiliations <span class="op">==</span><span class="st"> </span><span class="dv">4</span> <span class="op">&amp;</span>
+<span class="st">                               </span>Vendors <span class="op">&gt;</span><span class="st"> </span><span class="dv">4</span> <span class="op">~</span><span class="st"> </span><span class="fl">4.0</span>,
+                             Affiliations <span class="op">==</span><span class="st"> </span><span class="dv">3</span> <span class="op">&amp;</span>
+<span class="st">                               </span>Vendors <span class="op">&gt;</span><span class="st"> </span><span class="dv">3</span> <span class="op">~</span><span class="st"> </span><span class="fl">3.0</span>,
+                             Affiliations <span class="op">==</span><span class="st"> </span><span class="dv">2</span> <span class="op">&amp;</span>
+<span class="st">                               </span>Vendors <span class="op">&gt;</span><span class="st"> </span><span class="dv">2</span> <span class="op">~</span><span class="st"> </span><span class="fl">2.0</span>,
+                             Affiliations <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;</span>
+<span class="st">                               </span>Vendors <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">~</span><span class="st"> </span><span class="fl">1.0</span>,
+                          <span class="ot">TRUE</span> <span class="op">~</span><span class="st"> </span><span class="kw">as.double</span>(Vendors)),
+         <span class="dt">Affiliations =</span> <span class="kw">factor</span>(Affiliations)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Vendors, <span class="dt">y =</span> Affiliations, 
+                      <span class="dt">group =</span> Affiliations, <span class="dt">fill =</span> ..x..))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_density_ridges_gradient</span>(<span class="dt">scale =</span> <span class="fl">1.2</span>, <span class="dt">color =</span> <span class="st">&quot;#FFFFFF&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">expand =</span> <span class="kw">c</span>(<span class="fl">0.01</span>, <span class="dv">0</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_discrete</span>(<span class="dt">expand =</span> <span class="kw">c</span>(<span class="fl">0.01</span>, <span class="dv">0</span>)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">guides</span>(<span class="dt">fill =</span> <span class="st">&quot;none&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Increasing Affiliations increases EHRs&quot;</span>,
+       <span class="dt">subtitle =</span> 
+         <span class="kw">paste0</span>(<span class="st">&quot;Physicians affiliated with multiple hospitals&quot;</span>,
+                <span class="st">&quot;</span><span class="ch">\n</span><span class="st">have to interact with multiple EHRs&quot;</span>),
+       <span class="dt">x =</span> <span class="st">&quot;Disparate EHR Vendors&quot;</span>,
+       <span class="dt">y =</span> <span class="st">&quot;Hospital Affiliations&quot;</span>) <span class="op">+</span>
+<span class="st"> </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<p><img src="data_files/figure-html/dispplot-1.png" width="672" /></p>
+</div>
+</div>
+<div id="attestation-dates" class="section level1">
+<h1>Attestation Dates</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">attested =</span> lubridate<span class="op">::</span><span class="kw">floor_date</span>(attested, <span class="st">&quot;month&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(attested))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_bar</span>(<span class="dt">fill =</span> <span class="st">&quot;#377EB8&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_x_date</span>()<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Attestation Dates&quot;</span>,
+       <span class="dt">x =</span> <span class="st">&quot;Most Recent Attestation&quot;</span>,
+       <span class="dt">y =</span> <span class="ot">NULL</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
+<span class="st">  </span><span class="kw">facet_grid</span>(<span class="dt">rows =</span> <span class="kw">vars</span>(Provider_Type), <span class="dt">scales =</span> <span class="st">&quot;free_y&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
+        <span class="dt">strip.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
+        <span class="dt">strip.text.y =</span> <span class="kw">element_text</span>(<span class="dt">angle =</span> <span class="dv">0</span>),
+        <span class="dt">panel.spacing =</span> <span class="kw">unit</span>(<span class="dv">0</span>, <span class="st">&quot;lines&quot;</span>))</code></pre></div>
+<p><img src="data_files/figure-html/dateplot-1.png" width="672" /></p>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
