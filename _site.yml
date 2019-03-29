@@ -1,0 +1,27 @@
+name: "ms-demo"
+navbar:
+  title: "Matt Schuchardt"
+  type: inverse
+  left:
+    - text: "About"
+      icon: fa-poll-h
+      href: index.html
+    - text: "Modeling"
+      icon: fa-magic
+      href: demo.html
+    - text: "Visualization"
+      icon: fa-chart-line
+      href: data.html
+    - text: "R"
+      icon: fa-r-project
+      href: getstarted.html
+  right:
+    - icon: fa-linkedin
+      href: "https://www.linkedin.com/in/mattschuchardt/"
+    - icon: fa-envelope-square
+      href: "mailto:mattschuchardt305@gmail.com"
+output:
+  html_document:
+    theme: cerulean
+    highlight: pygments
+    css: styles.css
