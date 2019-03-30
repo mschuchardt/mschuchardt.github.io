@@ -11,7 +11,7 @@
 
 
 
-<title>PrimeR</title>
+<title></title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -320,7 +320,6 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">PrimeR</h1>
 
 </div>
 
@@ -352,9 +351,11 @@ There are two distributions to chose from:
 </ul></li>
 <li><p>Install an <a href="https://en.wikipedia.org/wiki/Integrated_development_environment">IDE</a><br />
 <a href="https://www.rstudio.com/products/rstudio/download/#download">RStudio</a> is the best. You can also use VisualStudio or the command line if you wanted.</p></li>
-<li><p>Add packages &amp; <a href="https://cran.r-project.org/bin/windows/Rtools/">install RTools</a> You’ll need this at some point, just bite the bullet and do it now.</p></li>
+<li><p><a href="https://cran.r-project.org/bin/windows/Rtools/">install RTools</a><br />
+You’ll need this at some point, just bite the bullet and do it now.</p></li>
+<li><p>Install package<br />
+R comes installed with a variety of excellent tools, but really shines with the addition of external packages. There are ~ 14,000 packages available for R. If you need to do it, from importing a spreadsheet to Disease-Gene-Variant Relations Mining, there’s likely a package to help.</p></li>
 </ol>
-<p>R comes installed with a variety of excellent tools, but really shines with the addition of external packages. There are ~ 14,000 packages available for R. If you need to do it, from importing a spreadsheet to Disease-Gene-Variant Relations Mining, there’s likely a package to help.</p>
 <p>These packages are used in the model and data analysis demonstrations:</p>
 <pre><code>install.packages(c(&quot;devtools&quot;,
                    &quot;tidyverse&quot;,
@@ -364,7 +365,6 @@ There are two distributions to chose from:
                    &quot;caTools&quot;,
                    &quot;DiagrammeR&quot;,
                    &quot;DT&quot;,
-                   &quot;ggridges&quot;,
                    &quot;glmnet&quot;,
                    &quot;kernlab&quot;,
                    &quot;knitr&quot;,
@@ -376,12 +376,13 @@ There are two distributions to chose from:
                   repos = &quot;https:://cloud.r-project.org&quot;,
                   dependencies = T)
                   </code></pre>
-<p>The demonstration model uses development versions of these tidymodels packages. They can be installed from <a href="https:://github.com">github</a>.</p>
-<pre><code>devtools::install_github(&quot;tidymodels/dials&quot;)
-devtools::install_github(&quot;tidymodels/parsnip&quot;)
-devtools::install_github(&quot;tidymodels/recipes&quot;)
-devtools::install_github(&quot;tidymodels/rsample&quot;)
-devtools::install_github(&quot;tidymodels/yardstick&quot;)
+<p>Development versions of the tidymodels packages can be installed from <a href="https:://github.com">github</a>.</p>
+<pre><code>devtools::install_github(c(&quot;tidymodels/dials&quot;,
+                           &quot;tidymodels/parsnip&quot;,
+                           &quot;tidymodels/recipes&quot;,
+                           &quot;tidymodels/rsample&quot;,
+                           &quot;tidymodels/rsample&quot;
+                           &quot;tidymodels/yardstick&quot;))
 </code></pre>
 </div>
 <div id="resources" class="section level1">
