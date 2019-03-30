@@ -416,21 +416,6 @@ $(document).ready(function () {
 </div>
 
 
-<div id="section" class="section level1 tabset">
-<h1></h1>
-<p>Visualizing interoperability challenges using the meaningful use report and physician compare dataset to compare hospital and affiliated physician EHR vendors.</p>
-<p>Interoperability impacts healthcare providers, health systems and patients. While the US healthcare system has made impressive strides in the last 8 years, there is still a long way to go.</p>
-<div id="data" class="section level2">
-<h2>Data</h2>
-<p>Two publicly available data sets from the Centers for Medicare and Medicaid Services:<br />
-1. <a href="https://dashboard.healthit.gov/datadashboard/documentation/ehr-products-mu-attestation-data-documentation.php">EHR Products Used for Meaningful Use Attestation</a><br />
-2. <a href="https://data.medicare.gov/Physician-Compare/Physician-Compare-National-Downloadable-File/mj5m-pzi6">Physician Compare National Downloadable File</a></p>
-</div>
-<div id="definition" class="section level2">
-<h2>Definition</h2>
-<blockquote>
-<p>According to section 4003 of the 21st Century Cures Act, the term ‘interoperability,’ with respect to health information technology, means such health information technology that— “(A) enables the secure exchange of electronic health information with, and use of electronic health information from, other health information technology without special effort on the part of the user;”(B) allows for complete access, exchange, and use of all electronically accessible health information for authorized use under applicable State or Federal law; and “(C) does not constitute information blocking as defined in section 3022(a).”</p>
-</blockquote>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># meaningful use reports ----</span>
 <span class="co"># cms api url</span>
 url.mu &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="st">&quot;http://dashboard.healthit.gov/datadashboard/&quot;</span>,
@@ -439,6 +424,7 @@ url.mu &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class=
 <span class="co"># read Meaningful Use report direct from CMS</span>
 mu &lt;-<span class="st"> </span><span class="kw">fread</span>(url.mu)
 
+<span class="co"># total attestations</span>
 total.attest &lt;-<span class="st"> </span><span class="kw">nrow</span>(mu)
 
 <span class="co"># create attestation date from date components</span>
@@ -455,10 +441,12 @@ mu[, CCN <span class="op">:</span><span class="er">=</span><span class="st"> </s
                       <span class="kw">as.character</span>(CCN))]
 mu[, Id <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">is.na</span>(CCN), NPI, CCN)]
 
+<span class="co"># records per attestation</span>
 npi.attest &lt;-<span class="st"> </span>mu[, 
                  .N,
                  by =<span class="st"> </span>.(Id, Attestation_Month, Attestation_Year)]
 
+<span class="co"># vendors per attestation</span>
 npi.vend &lt;-<span class="st"> </span>mu[,
                <span class="kw">length</span>(<span class="kw">unique</span>(Vendor_Name)),
                by =<span class="st"> </span>.(Id, 
@@ -466,10 +454,13 @@ npi.vend &lt;-<span class="st"> </span>mu[,
                       Product_Classification, 
                       attested)] 
 
+<span class="co"># number of attestations per Id</span>
 npi.year &lt;-<span class="st"> </span>mu[, .(<span class="kw">min</span>(Attestation_Year),
-                   <span class="kw">max</span>(Attestation_Year)), keyby =<span class="st"> </span>Id
+                   <span class="kw">max</span>(Attestation_Year)), 
+               keyby =<span class="st"> </span>Id
                ][, Years <span class="op">:</span><span class="er">=</span><span class="st"> </span>V2 <span class="op">-</span><span class="st"> </span>V1]
 
+<span class="co"># number of vendors per modular attestation</span>
 mod.attest &lt;-<span class="st"> </span>npi.attest[npi.vend[Product_Classification <span class="op">==</span>
 <span class="st">                                    &quot;Modular EHR&quot;</span>, .(Id)],
                          on =<span class="st"> &quot;Id&quot;</span>][,
@@ -489,11 +480,15 @@ mod.attest &lt;-<span class="st"> </span>npi.attest[npi.vend[Product_Classificat
                                                    <span class="st">&quot;Four&quot;</span>,
                                                    <span class="st">&quot;Five&quot;</span>,
                                                    <span class="st">&quot;Six or More&quot;</span>),
-                                               <span class="dt">ordered =</span> T)]</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">expand_yr &lt;-<span class="st"> </span><span class="cf">function</span>(x){
+                                               <span class="dt">ordered =</span> T)]
+
+<span class="co"># fill in gaps in attestation year</span>
+expand_yr &lt;-<span class="st"> </span><span class="cf">function</span>(x){
   out &lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">seq</span>(<span class="kw">min</span>(x), <span class="kw">max</span>(x), <span class="dv">1</span>))
 }
 
+<span class="co"># get range of attestation years per vendor</span>
+<span class="co"># fill gaps</span>
 vendor.yrs &lt;-<span class="st"> </span>mu[,
                  .(<span class="kw">expand_yr</span>(Attestation_Year),
                   .N),
@@ -502,10 +497,10 @@ vendor.yrs &lt;-<span class="st"> </span>mu[,
                            Product_Classification,
                            Provider_Type)]
 
-vendors &lt;-<span class="st"> </span>vendor.yrs <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">rename</span>(<span class="dt">Attestation_Year =</span> V1) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Vendor_Name =</span> 
-           <span class="kw">case_when</span>(<span class="kw">str_detect</span>(Vendor_Name, 
+<span class="kw">setnames</span>(vendor.yrs, <span class="st">&quot;V1&quot;</span>, <span class="st">&quot;Attestation_Year&quot;</span>)
+<span class="co"># prep vendor names for plotting</span>
+vendor.yrs[, Vendor_Name <span class="op">:</span><span class="er">=</span><span class="st"> </span>
+<span class="st">           </span><span class="kw">case_when</span>(<span class="kw">str_detect</span>(Vendor_Name, 
                                 <span class="st">&quot;MEDITECH&quot;</span>) <span class="op">~</span><span class="st"> &quot;MEDITECH&quot;</span>,
                                <span class="kw">str_detect</span>(Vendor_Name,
                                           <span class="st">&quot;CPSI|Evident&quot;</span>) <span class="op">~</span><span class="st"> &quot;CPSI&quot;</span>,
@@ -520,21 +515,27 @@ vendors &lt;-<span class="st"> </span>vendor.yrs <span class="op">%&gt;%</span><
                                           <span class="st">&quot;Siemens&quot;</span>) <span class="op">~</span><span class="st"> &quot;Cerner&quot;</span>,
                                <span class="ot">TRUE</span> <span class="op">~</span><span class="st"> </span>
 <span class="st">                                 </span><span class="kw">str_remove_all</span>(Vendor_Name,
-                                          <span class="st">&quot; Corporation|, LLC&quot;</span>)))
+                                          <span class="st">&quot; Corporation|, LLC&quot;</span>))]
  
-vendor &lt;-<span class="st"> </span>vendors <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(Vendor_Name, Attestation_Year, Provider_Type) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n_distinct</span>(Id))
+<span class="co"># attestations by vendor</span>
+vendor &lt;-<span class="st"> </span>vendor.yrs[, <span class="kw">length</span>(<span class="kw">unique</span>(Id)),
+                     keyby =<span class="st"> </span>.(Vendor_Name,
+                               Attestation_Year,
+                               Provider_Type)]
 
-top.vendors &lt;-<span class="st"> </span>vendor <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(Vendor_Name, Provider_Type) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">Avg =</span> <span class="kw">max</span>(n)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(Provider_Type) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Rank =</span> <span class="kw">dense_rank</span>(<span class="kw">desc</span>(Avg))) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Vendor =</span> <span class="kw">ifelse</span>(Provider_Type <span class="op">==</span><span class="st"> &quot;Hospital&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Rank <span class="op">&lt;</span><span class="st"> </span><span class="dv">6</span> <span class="op">|</span>
-<span class="st">                           </span>Provider_Type <span class="op">==</span><span class="st"> &quot;EP&quot;</span> <span class="op">&amp;</span><span class="st"> </span>Rank <span class="op">&lt;=</span><span class="st"> </span><span class="dv">8</span>,
-                         Vendor_Name, <span class="st">&quot;Other&quot;</span>))</code></pre></div>
+<span class="co"># top vendors by attestation</span>
+<span class="co"># use to limit vendors for plotting</span>
+top.vendors &lt;-<span class="st"> </span>vendor[, Installs <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">max</span>(V1),
+                      keyby =<span class="st"> </span>.(Vendor_Name, Provider_Type)
+                      ][, .(<span class="kw">dense_rank</span>(<span class="kw">desc</span>(Installs)),
+                            Installs,
+                            Vendor_Name),
+                        keyby =<span class="st"> </span>Provider_Type]
+ 
+top.vendors[, Vendor <span class="op">:</span><span class="er">=</span><span class="st"> </span>
+<span class="st">              </span><span class="kw">ifelse</span>(Provider_Type <span class="op">==</span><span class="st"> &quot;Hospital&quot;</span> <span class="op">&amp;</span><span class="st"> </span>V1 <span class="op">&lt;</span><span class="st"> </span><span class="dv">6</span> <span class="op">|</span>
+<span class="st">                           </span>Provider_Type <span class="op">==</span><span class="st"> &quot;EP&quot;</span> <span class="op">&amp;</span><span class="st"> </span>V1 <span class="op">&lt;=</span><span class="st"> </span><span class="dv">8</span>,
+                         Vendor_Name, <span class="st">&quot;Other&quot;</span>)]</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># hospital affiliations ----</span>
 <span class="co"># Get Physician Compare data via API call to CMS</span>
 <span class="co"># will read in all variables as character as CCN5 screws up </span>
@@ -575,13 +576,20 @@ aff.hosp[,variable <span class="op">:</span><span class="er">=</span><span class
 
 <span class="co"># limit to providers reporting affiliations</span>
 aff.hosp &lt;-<span class="st"> </span>aff.hosp[MedicareNumber <span class="op">!=</span><span class="st"> &quot;&quot;</span>,]</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.hosp2 &lt;-<span class="st"> </span>aff.hosp[NPI <span class="op">%in%</span><span class="st"> </span>mu<span class="op">$</span>NPI <span class="op">&amp;</span>
+<div id="section" class="section level1 tabset">
+<h1></h1>
+<p><a href="https://www.himss.org/library/interoperability-standards/what-is-interoperability">Interoperability is the ability of different information systems, devices or applications to connect, in a coordinated manner, within and across organizational boundaries to access, exchange and cooperatively use data amongst stakeholders, with the goal of optimizing the health of individuals and populations.</a></p>
+<p>The effort required to acheive interoperability can be illustrated by looking at the volume of systems that must coordinate to acheive interoperability between a single hospital and it’s affiliated physicians.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># affiliations with mu records</span>
+aff.hosp2 &lt;-<span class="st"> </span>aff.hosp[NPI <span class="op">%in%</span><span class="st"> </span>mu<span class="op">$</span>NPI <span class="op">&amp;</span>
 <span class="st">           </span>MedicareNumber <span class="op">%in%</span><span class="st"> </span>mu[<span class="op">!</span><span class="kw">is.na</span>(mu<span class="op">$</span>CCN),]<span class="op">$</span>CCN]
 
+<span class="co"># unique</span>
 aff.hosp2 &lt;-<span class="st"> </span><span class="kw">unique</span>(aff.hosp2)
 
 <span class="kw">setkeyv</span>(aff.hosp2, <span class="kw">c</span>(<span class="st">&quot;NPI&quot;</span>, <span class="st">&quot;MedicareNumber&quot;</span>))
 
+<span class="co"># ep vendors</span>
 mu.ep &lt;-<span class="st"> </span>mu[Provider_Type <span class="op">==</span><span class="st"> &quot;EP&quot;</span> <span class="op">&amp;</span>
 <span class="st">              </span>NPI <span class="op">%in%</span><span class="st"> </span>aff.hosp2<span class="op">$</span>NPI, .(NPI, Vendor_Name)]
 
@@ -589,17 +597,19 @@ mu.ep &lt;-<span class="st"> </span><span class="kw">unique</span>(mu.ep)
   
 <span class="kw">setkey</span>(mu.ep, NPI)
 
+<span class="co"># hosp vendors</span>
 mu.hosp &lt;-<span class="st"> </span>mu[Provider_Type <span class="op">==</span><span class="st"> &quot;Hospital&quot;</span> <span class="op">&amp;</span>
 <span class="st">                </span>CCN <span class="op">%in%</span><span class="st"> </span>aff.hosp2<span class="op">$</span>MedicareNumber, 
               .(CCN, Vendor_Name)]
 
 mu.hosp &lt;-<span class="st"> </span><span class="kw">unique</span>(mu.hosp)
 
-<span class="kw">colnames</span>(mu.hosp) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;MedicareNumber&quot;</span>, 
-                       <span class="st">&quot;Vendor_Name&quot;</span>)
+<span class="kw">setnames</span>(mu.hosp, <span class="kw">c</span>(<span class="st">&quot;MedicareNumber&quot;</span>, 
+                    <span class="st">&quot;Vendor_Name&quot;</span>))
 
 <span class="kw">setkey</span>(mu.hosp, MedicareNumber)
 
+<span class="co"># joins</span>
 mu.aff &lt;-<span class="st"> </span>aff.hosp2[mu.ep,
                     .(MedicareNumber, Vendor_Name),
                     by =<span class="st"> </span>.EACHI]
@@ -621,49 +631,37 @@ aff.cnt &lt;-<span class="st"> </span>aff.hosp[,
 
 hosp.cnt &lt;-<span class="st"> </span>aff.hosp[,
                     .(<span class="kw">length</span>(<span class="kw">unique</span>(NPI))),
-                    keyby =<span class="st"> </span>MedicareNumber]</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.avg &lt;-<span class="st">  </span>mu.aff[,
+                    keyby =<span class="st"> </span>MedicareNumber]
+
+
+aff.mu.avg &lt;-<span class="st">  </span>mu.aff[,
                      .(<span class="kw">length</span>(<span class="kw">unique</span>(Vendor_Name)),
                        <span class="kw">length</span>(<span class="kw">unique</span>(NPI)),
                        <span class="kw">mean</span>(Same)),
                        keyby =<span class="st"> &quot;MedicareNumber&quot;</span>]
 
-<span class="kw">colnames</span>(aff.mu.avg) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;MedicareNumber&quot;</span>, 
-                          <span class="st">&quot;Vendors&quot;</span>,
-                          <span class="st">&quot;Affiliated&quot;</span>, 
-                          <span class="st">&quot;InterOp&quot;</span>)
+<span class="kw">setnames</span>(aff.mu.avg, <span class="kw">c</span>(<span class="st">&quot;MedicareNumber&quot;</span>, 
+                       <span class="st">&quot;Vendors&quot;</span>,
+                       <span class="st">&quot;Affiliated&quot;</span>, 
+                       <span class="st">&quot;InterOp&quot;</span>))
 
 aff.mu.npi &lt;-<span class="st"> </span>mu.aff[,
-                     .(<span class="kw">length</span>(<span class="kw">unique</span>(i.Vendor_Name)),
-                       <span class="kw">length</span>(<span class="kw">unique</span>(MedicareNumber)),
-                       <span class="kw">mean</span>(Same)),
-                       keyby =<span class="st"> &quot;NPI&quot;</span>] 
+                     .(<span class="kw">max</span>(<span class="kw">as.numeric</span>(Same)) <span class="op">==</span><span class="st"> </span><span class="dv">0</span>),
+                     keyby =<span class="st"> </span>.(NPI, MedicareNumber)
+                     ] 
 
-<span class="kw">colnames</span>(aff.mu.npi) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;NPI&quot;</span>, 
-                          <span class="st">&quot;Vendors&quot;</span>,
-                          <span class="st">&quot;Affiliated&quot;</span>, 
-                          <span class="st">&quot;InterOp&quot;</span>)
+aff.mu.npi.cnt &lt;-<span class="st"> </span>aff.mu.npi[,
+                             .(<span class="kw">length</span>(<span class="kw">unique</span>(MedicareNumber)),
+                               <span class="kw">sum</span>(V1)),
+                             keyby =<span class="st"> </span>NPI] 
 
-aff.mu.disp &lt;-<span class="st"> </span>mu.aff[Same <span class="op">==</span><span class="st"> </span>F
-                      ][mu[, .I[attested <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(attested)],
-           by =<span class="st"> </span>.(CCN, Vendor_Name)]<span class="op">$</span>V1][,
-                        .(<span class="kw">length</span>(<span class="kw">unique</span>(MedicareNumber)),
-                          <span class="kw">length</span>(<span class="kw">unique</span>(i.Vendor_Name))),
-                        keyby =<span class="st"> </span>.(NPI)] 
-
-<span class="kw">colnames</span>(aff.mu.disp) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;NPI&quot;</span>,
-                           <span class="st">&quot;Affiliated&quot;</span>,
-                          <span class="st">&quot;Vendors&quot;</span>
-                          )</code></pre></div>
-</div>
-</div>
-<div id="interoperability" class="section level1">
-<h1>Interoperability</h1>
+<span class="kw">setnames</span>(aff.mu.npi.cnt, <span class="kw">c</span>(<span class="st">&quot;NPI&quot;</span>, 
+                           <span class="st">&quot;Affiliated&quot;</span>, 
+                           <span class="st">&quot;Vendors&quot;</span>))</code></pre></div>
 <p>Since April 2011 241,744 providers reported their EHR vendor and affiliation with at least one of 4,391 hospitals.</p>
-<div id="hospitals" class="section level2 tabset">
+<div id="hospitals" class="section level2">
 <h2>Hospitals</h2>
-<div id="overall" class="section level3">
-<h3>Overall</h3>
+<p>Hospitals have to coordinate with an additional EHR system for every 3 affiliated physicians.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.avg <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">grp =</span> <span class="st">&quot;group&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Affiliated, Vendors))<span class="op">+</span>
@@ -677,11 +675,10 @@ aff.mu.disp &lt;-<span class="st"> </span>mu.aff[Same <span class="op">==</span>
 <span class="st">  </span><span class="kw">scale_x_log10</span>(<span class="dt">limits =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1000</span>))<span class="op">+</span>
 <span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">begin =</span> <span class="fl">0.0</span>,
                        <span class="dt">end =</span> <span class="fl">0.1</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Increasing Affiliated Physicians increases EHRs&quot;</span>,
-       <span class="dt">subtitle =</span> 
-         <span class="kw">paste0</span>(<span class="st">&quot;Hospitals with large numbers of affiliated&quot;</span>,
-                <span class="st">&quot;</span><span class="ch">\n</span><span class="st">physicians have to interact with large numbers&quot;</span>,
-                <span class="st">&quot; of EHRs&quot;</span>),
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="kw">paste</span>(<span class="st">&quot;The average hospital has affilated&quot;</span>,
+                     <span class="st">&quot;physicians</span><span class="ch">\n</span><span class="st">using&quot;</span>,
+                     <span class="kw">round</span>(<span class="kw">mean</span>(aff.mu.avg<span class="op">$</span>Vendors)),
+                    <span class="st">&quot;disparate EHR systems&quot;</span>),
        <span class="dt">x =</span> <span class="st">&quot;log10(Affiliated Physicians)&quot;</span>,
        <span class="dt">y =</span> <span class="st">&quot;Physician EHR Vendors&quot;</span>)<span class="op">+</span>
 <span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
@@ -689,8 +686,79 @@ aff.mu.disp &lt;-<span class="st"> </span>mu.aff[Same <span class="op">==</span>
                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
 <p><img src="data_files/figure-html/sct-1.png" width="576" /></p>
 </div>
-<div id="by-ehr-vendor" class="section level3">
-<h3>By EHR vendor</h3>
+<div id="providers" class="section level2">
+<h2>Providers</h2>
+<p>32% of physican affiliations involve multiple EHR vendors.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.npi.cnt <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(Affiliated <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Same =</span> Vendors <span class="op">==</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">group_by</span>(Same) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(<span class="kw">round</span>(n <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(n), <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>, <span class="st">&quot;%&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Same, n))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> Same), <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">label =</span> label,
+                <span class="dt">color =</span> Same),
+            <span class="dt">nudge_y =</span> <span class="op">-</span><span class="dv">5000</span>,
+            <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>,
+            <span class="dt">size =</span> <span class="dv">5</span>,
+            <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_fill_viridis_d</span>(<span class="dt">option =</span> <span class="st">&quot;D&quot;</span>,
+                       <span class="dt">begin =</span> <span class="fl">0.4</span>,
+                       <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">direction =</span> <span class="op">-</span><span class="dv">1</span>,
+                        <span class="dt">option =</span> <span class="st">&quot;D&quot;</span>,
+                        <span class="dt">begin =</span> <span class="fl">0.4</span>,
+                       <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> 
+         <span class="kw">paste</span>(<span class="kw">comma</span>(<span class="kw">nrow</span>(aff.mu.npi.cnt[aff.mu.npi.cnt<span class="op">$</span>Affiliated <span class="op">==</span>
+<span class="st">                                       </span><span class="dv">1</span>,])),
+       <span class="st">&quot;Physicians reporting a single affiliation&quot;</span>),
+       <span class="dt">y =</span> <span class="st">&quot;Physicians&quot;</span>,
+       <span class="dt">x =</span> <span class="st">&quot;Reported Use of same EHR as Affiliated Hospital&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))
+
+aff.mu.npi.cnt <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(Affiliated <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Same =</span> Vendors <span class="op">==</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(NPI, Same) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unique</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(Same) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(<span class="kw">round</span>(n <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(n), <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>, <span class="st">&quot;%&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Same, n))<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> Same), <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">label =</span> label,
+                <span class="dt">color =</span> Same),
+            <span class="dt">nudge_y =</span> <span class="op">-</span><span class="dv">5000</span>,
+            <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>,
+            <span class="dt">size =</span> <span class="dv">5</span>,
+            <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">   </span><span class="kw">scale_fill_viridis_d</span>(<span class="dt">begin =</span> <span class="fl">0.4</span>,
+                       <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">direction =</span> <span class="op">-</span><span class="dv">1</span>,
+                        <span class="dt">begin =</span> <span class="fl">0.4</span>,
+                       <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
+<span class="st"> </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> 
+         <span class="kw">paste</span>(<span class="kw">comma</span>(<span class="kw">nrow</span>(aff.mu.npi.cnt[aff.mu.npi.cnt<span class="op">$</span>Affiliated <span class="op">!=</span>
+<span class="st">                                       </span><span class="dv">1</span>,])),
+       <span class="st">&quot;Physicians reporting multiple affiliations&quot;</span>),
+       <span class="dt">y =</span> <span class="st">&quot;Physicians&quot;</span>,
+       <span class="dt">x =</span> <span class="kw">paste0</span>(<span class="st">&quot;Reported Use of same EHR &quot;</span>,
+                  <span class="st">&quot;as at least 1 Affiliated Hospital&quot;</span>))<span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
+          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<p><img src="data_files/figure-html/physplots-1.png" width="45%" /><img src="data_files/figure-html/physplots-2.png" width="45%" /></p>
+</div>
+<div id="by-hospital-vendor" class="section level2">
+<h2>By Hospital Vendor</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mu.vend &lt;-<span class="st"> </span>mu.aff[, .(<span class="kw">length</span>(<span class="kw">unique</span>(NPI)),
                       <span class="kw">length</span>(<span class="kw">unique</span>(Vendor_Name))),
            keyby =<span class="st"> </span>.(MedicareNumber, i.Vendor_Name)
@@ -701,10 +769,10 @@ mu.vend &lt;-<span class="st"> </span>mu.vend[mu[, .I[attested <span class="op">
 
 mu.vend &lt;-<span class="st"> </span><span class="kw">unique</span>(mu.vend)
 
-<span class="kw">colnames</span>(mu.vend) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;MedicareNumber&quot;</span>, 
-                       <span class="st">&quot;Vendor_Name&quot;</span>,
-                       <span class="st">&quot;Affiliated&quot;</span>,
-                       <span class="st">&quot;Vendors&quot;</span>)
+<span class="kw">setnames</span>(mu.vend, <span class="kw">c</span>(<span class="st">&quot;MedicareNumber&quot;</span>, 
+                    <span class="st">&quot;Vendor_Name&quot;</span>,
+                    <span class="st">&quot;Affiliated&quot;</span>,
+                    <span class="st">&quot;Vendors&quot;</span>))
 
 mu.vend<span class="op">$</span>Vendor &lt;-<span class="st"> </span><span class="kw">case_when</span>(<span class="kw">str_detect</span>(mu.vend<span class="op">$</span>Vendor_Name, 
                                 <span class="st">&quot;MEDITECH&quot;</span>) <span class="op">~</span><span class="st"> &quot;MEDITECH&quot;</span>,
@@ -745,99 +813,39 @@ mu.vend <span class="op">%&gt;%</span><span class="st"> </span>
         <span class="dt">legend.key.size =</span> <span class="kw">unit</span>(<span class="dv">2</span>, <span class="st">&quot;lines&quot;</span>))</code></pre></div>
 <p><img src="data_files/figure-html/byvend-1.png" width="576" /></p>
 </div>
-</div>
-<div id="providers" class="section level2 tabset">
-<h2>Providers</h2>
-<div id="overall-1" class="section level3">
-<h3>Overall</h3>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.npi <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(Affiliated <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Same =</span> InterOp <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">group_by</span>(Same) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(<span class="kw">round</span>(n <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(n), <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>, <span class="st">&quot;%&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Same, n))<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> Same), <span class="dt">show.legend =</span> F)<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">label =</span> label,
-                <span class="dt">color =</span> Same),
-            <span class="dt">nudge_y =</span> <span class="op">-</span><span class="dv">5000</span>,
-            <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>,
-            <span class="dt">size =</span> <span class="dv">5</span>,
-            <span class="dt">show.legend =</span> F)<span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_fill_viridis_d</span>(<span class="dt">option =</span> <span class="st">&quot;D&quot;</span>,
-                       <span class="dt">begin =</span> <span class="fl">0.4</span>,
-                       <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">direction =</span> <span class="op">-</span><span class="dv">1</span>,
-                        <span class="dt">option =</span> <span class="st">&quot;D&quot;</span>,
-                        <span class="dt">begin =</span> <span class="fl">0.4</span>,
+<div id="disparate-ehr" class="section level2">
+<h2>Disparate EHR</h2>
+<p>Physicians have to coordinate with an additional EHR system for every NaN affiliation.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.npi.cnt <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">grp =</span> <span class="st">&quot;group&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Affiliated, Vendors)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_summary</span>(<span class="dt">fun.data =</span> <span class="st">&quot;median_hilow&quot;</span>,
+               <span class="dt">geom =</span> <span class="st">&quot;linerange&quot;</span>,
+               <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">color =</span> Affiliated),
+               <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_summary</span>(<span class="dt">fun.y =</span> <span class="st">&quot;median&quot;</span>,
+               <span class="dt">geom =</span> <span class="st">&quot;line&quot;</span>,
+               <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">color =</span> Affiliated),
+               <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">stat_sum</span>(<span class="dt">geom =</span> <span class="st">&quot;point&quot;</span>,
+           <span class="dt">mapping =</span> <span class="kw">aes</span>(<span class="dt">color =</span> Affiliated),
+           <span class="dt">show.legend =</span> F)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_color_viridis_c</span>(<span class="dt">begin =</span> <span class="fl">0.2</span>,
                        <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
 <span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_x_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
 <span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> 
-         <span class="kw">paste</span>(<span class="kw">comma</span>(<span class="kw">nrow</span>(aff.mu.npi[aff.mu.npi<span class="op">$</span>Affiliated <span class="op">==</span>
-<span class="st">                                       </span><span class="dv">1</span>,])),
-       <span class="st">&quot;Physicians reporting a single affiliation&quot;</span>),
-       <span class="dt">y =</span> <span class="st">&quot;Physicians&quot;</span>,
-       <span class="dt">x =</span> <span class="st">&quot;Reported Use of same EHR as Affiliated Hospital&quot;</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
-          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
-                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))
-
-aff.mu.npi <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(Affiliated <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Same =</span> InterOp <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">select</span>(NPI, Same) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">unique</span>() <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(Same) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(<span class="kw">round</span>(n <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(n), <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>, <span class="st">&quot;%&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Same, n))<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> Same), <span class="dt">show.legend =</span> F)<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_text</span>(<span class="kw">aes</span>(<span class="dt">label =</span> label,
-                <span class="dt">color =</span> Same),
-            <span class="dt">nudge_y =</span> <span class="op">-</span><span class="dv">3000</span>,
-            <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>,
-            <span class="dt">size =</span> <span class="dv">5</span>,
-            <span class="dt">show.legend =</span> F)<span class="op">+</span>
-<span class="st">   </span><span class="kw">scale_fill_viridis_d</span>(<span class="dt">begin =</span> <span class="fl">0.4</span>,
-                       <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_color_viridis_d</span>(<span class="dt">direction =</span> <span class="op">-</span><span class="dv">1</span>,
-                        <span class="dt">begin =</span> <span class="fl">0.4</span>,
-                       <span class="dt">end =</span> <span class="fl">0.8</span>)<span class="op">+</span>
-<span class="st"> </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> scales<span class="op">::</span>comma)<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> 
-         <span class="kw">paste</span>(<span class="kw">comma</span>(<span class="kw">nrow</span>(aff.mu.npi[aff.mu.npi<span class="op">$</span>Affiliated <span class="op">!=</span>
-<span class="st">                                       </span><span class="dv">1</span>,])),
-       <span class="st">&quot;Physicians reporting multiple affiliations&quot;</span>),
-       <span class="dt">y =</span> <span class="st">&quot;Physicians&quot;</span>,
-       <span class="dt">x =</span> <span class="kw">paste0</span>(<span class="st">&quot;Reported Use of same EHR &quot;</span>,
-                  <span class="st">&quot;as at least 1 Affiliated Hospital&quot;</span>))<span class="op">+</span>
-<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
-          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
-                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
-<p><img src="data_files/figure-html/physplots-1.png" width="45%" /><img src="data_files/figure-html/physplots-2.png" width="45%" /></p>
-</div>
-<div id="disparate-ehr" class="section level3">
-<h3>Disparate EHR</h3>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">aff.mu.disp <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Affiliated =</span> <span class="kw">factor</span>(Affiliated)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Vendors, <span class="dt">y =</span> Affiliated, 
-                      <span class="dt">group =</span> Affiliated, <span class="dt">fill =</span> ..x..))<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_density_ridges_gradient</span>(<span class="dt">scale =</span> <span class="fl">1.2</span>, <span class="dt">color =</span> <span class="st">&quot;#FFFFFF&quot;</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_fill_viridis_c</span>()<span class="op">+</span>
-<span class="st">  </span><span class="kw">guides</span>(<span class="dt">fill =</span> <span class="st">&quot;none&quot;</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Increasing Affiliations increases EHRs&quot;</span>,
-       <span class="dt">subtitle =</span> 
-         <span class="kw">paste0</span>(<span class="st">&quot;Physicians affiliated with multiple hospitals&quot;</span>,
+         <span class="kw">paste0</span>(<span class="kw">round</span>(<span class="kw">nrow</span>(aff.mu.npi.cnt[Affiliated <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span> <span class="op">&amp;</span>
+<span class="st">                                            </span>Vendors <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>]) <span class="op">/</span>
+<span class="st">                        </span><span class="kw">nrow</span>(aff.mu.npi.cnt[Affiliated <span class="op">&gt;</span><span class="st"> </span><span class="dv">1</span>]), <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>,
+                <span class="st">&quot;% of Physicians affiliated with multiple hospitals&quot;</span>,
                 <span class="st">&quot;</span><span class="ch">\n</span><span class="st">have to interact with multiple EHRs&quot;</span>),
-       <span class="dt">x =</span> <span class="st">&quot;Disparate EHR Vendors&quot;</span>,
-       <span class="dt">y =</span> <span class="st">&quot;Hospital Affiliations&quot;</span>) <span class="op">+</span>
+       <span class="dt">x =</span> <span class="st">&quot;Hospital Affiliations&quot;</span>,
+       <span class="dt">y =</span> <span class="st">&quot;Additional EHR Vendors&quot;</span>) <span class="op">+</span>
 <span class="st"> </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
           <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
 <p><img src="data_files/figure-html/dispplot-1.png" width="576" /></p>
-</div>
 </div>
 </div>
 <div id="vendor-market-share" class="section level1 tabset">
@@ -846,22 +854,22 @@ aff.mu.npi <span class="op">%&gt;%</span><span class="st"> </span>
 <h2>Inpatient</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">n.hosp &lt;-<span class="st"> </span><span class="kw">length</span>(
   <span class="kw">unique</span>(
-    vendors[vendors<span class="op">$</span>Vendor_Name <span class="op">%in%</span>
+    vendor[vendor<span class="op">$</span>Vendor_Name <span class="op">%in%</span>
 <span class="st">              </span>top.vendors[top.vendors<span class="op">$</span>Provider_Type <span class="op">==</span>
 <span class="st">                            &quot;Hospital&quot;</span> <span class="op">&amp;</span>
 <span class="st">                          </span>top.vendors<span class="op">$</span>Vendor <span class="op">!=</span><span class="st"> &quot;Other&quot;</span>,
                           ]<span class="op">$</span>Vendor_Name <span class="op">&amp;</span>
-<span class="st">              </span>vendors<span class="op">$</span>Provider_Type <span class="op">==</span><span class="st"> &quot;Hospital&quot;</span>, ]<span class="op">$</span>Id)
+<span class="st">              </span>vendor<span class="op">$</span>Provider_Type <span class="op">==</span><span class="st"> &quot;Hospital&quot;</span>, ]<span class="op">$</span>Id)
   )
 
 n.ep &lt;-<span class="st"> </span><span class="kw">length</span>(
   <span class="kw">unique</span>(
-    vendors[vendors<span class="op">$</span>Vendor_Name <span class="op">%in%</span>
+    vendor[vendor<span class="op">$</span>Vendor_Name <span class="op">%in%</span>
 <span class="st">              </span>top.vendors[top.vendors<span class="op">$</span>Provider_Type <span class="op">!=</span>
 <span class="st">                            &quot;Hospital&quot;</span> <span class="op">&amp;</span>
 <span class="st">                          </span>top.vendors<span class="op">$</span>Vendor <span class="op">!=</span><span class="st"> &quot;Other&quot;</span>,
                           ]<span class="op">$</span>Vendor_Name <span class="op">&amp;</span>
-<span class="st">              </span>vendors<span class="op">$</span>Provider_Type <span class="op">!=</span><span class="st"> &quot;Hospital&quot;</span>, ]<span class="op">$</span>Id)
+<span class="st">              </span>vendor<span class="op">$</span>Provider_Type <span class="op">!=</span><span class="st"> &quot;Hospital&quot;</span>, ]<span class="op">$</span>Id)
 )
 
 vendor <span class="op">%&gt;%</span><span class="st"> </span>
@@ -871,7 +879,7 @@ vendor <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">filter</span>(Provider_Type <span class="op">!=</span><span class="st"> &quot;EP&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">filter</span>(Attestation_Year <span class="op">&lt;</span><span class="st"> </span><span class="dv">2018</span>) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(Vendor, Attestation_Year) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">sum</span>(n)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">sum</span>(V1)) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Attestation_Year, n))<span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_smooth</span>(<span class="kw">aes</span>(<span class="dt">group =</span> Vendor,
                 <span class="dt">color =</span> <span class="kw">fct_reorder2</span>(Vendor,
@@ -903,7 +911,7 @@ vendor <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">filter</span>(Provider_Type <span class="op">==</span><span class="st"> &quot;EP&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">filter</span>(Attestation_Year <span class="op">&lt;</span><span class="st"> </span><span class="dv">2018</span>) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(Vendor, Attestation_Year) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">sum</span>(n)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n =</span> <span class="kw">sum</span>(V1)) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Attestation_Year, n))<span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_smooth</span>(<span class="kw">aes</span>(<span class="dt">group =</span> Vendor,
                 <span class="dt">color =</span> <span class="kw">fct_reorder2</span>(Vendor,
@@ -927,8 +935,11 @@ vendor <span class="op">%&gt;%</span><span class="st"> </span>
 <p><img src="data_files/figure-html/opplot-1.png" width="576" /></p>
 </div>
 </div>
-<div id="data-1" class="section level1">
+<div id="data" class="section level1">
 <h1>Data</h1>
+<p>Two publicly available data sets from the Centers for Medicare and Medicaid Services:<br />
+1. <a href="https://dashboard.healthit.gov/datadashboard/documentation/ehr-products-mu-attestation-data-documentation.php">EHR Products Used for Meaningful Use Attestation</a><br />
+2. <a href="https://data.medicare.gov/Physician-Compare/Physician-Compare-National-Downloadable-File/mj5m-pzi6">Physician Compare National Downloadable File</a></p>
 <div id="meaningful-use-report" class="section level2 tabset">
 <h2>Meaningful Use Report</h2>
 <p>356,996 Eligible Providers and 4,674 Hospitals made 1,189,492 attestations to the meaningful use of Electronic Health Records from 2011 to 2018. Just over half (59%) of providers attested for 3 or more years.</p>
