@@ -356,18 +356,13 @@ $(document).ready(function () {
   <a href="index.html">Matt Schuchardt</a>
 </li>
 <li>
-  <a href="demo.html">
-    <span class="fa fa-magic"></span>
-     
-    Modeling
-  </a>
+  <a href="demo.html">Modeling</a>
 </li>
 <li>
-  <a href="data.html">
-    <span class="fa fa-chart-line"></span>
-     
-    Visualization
-  </a>
+  <a href="data.html">Visualization</a>
+</li>
+<li>
+  <a href="match.html">Matching</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -806,7 +801,7 @@ mu.vend<span class="op">$</span>Vendor &lt;-<span class="st"> </span><span class
                                <span class="kw">str_detect</span>(mu.vend<span class="op">$</span>Vendor_Name,
                                           <span class="st">&quot;McKesson&quot;</span>) <span class="op">~</span><span class="st"> &quot;Allscripts&quot;</span>,
                                <span class="kw">str_detect</span>(mu.vend<span class="op">$</span>Vendor_Name,
-                                          <span class="st">&quot;Siemens&quot;</span>) <span class="op">~</span><span class="st"> &quot;Cerner&quot;</span>,
+                                          <span class="st">&quot;Siemens|Cerner&quot;</span>) <span class="op">~</span><span class="st"> &quot;Cerner&quot;</span>,
                                <span class="ot">TRUE</span> <span class="op">~</span><span class="st"> </span>
 <span class="st">                                 </span><span class="kw">str_remove_all</span>(mu.vend<span class="op">$</span>Vendor_Name,
                                           <span class="st">&quot; Corporation|, LLC&quot;</span>))
