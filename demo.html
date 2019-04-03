@@ -2646,8 +2646,10 @@ vrs.prose &lt;-<span class="st"> </span><span class="kw">ifelse</span>(fs <span 
                     <span class="kw">paste</span>(<span class="kw">length</span>(train.vrs),
                           <span class="st">&quot;predictors&quot;</span>))</code></pre></div>
 <p><strong>Final Model:</strong> Random Forest using 55 of 63 predictors selected by the Importance filter.</p>
-<div id="accuracy" class="section level2">
+<div id="accuracy" class="section level2 tabset tabset-pills">
 <h2>Accuracy</h2>
+<div id="by-year" class="section level3">
+<h3>By year</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot accuracy by year</span>
 test.preds <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">YearCreated =</span> <span class="kw">factor</span>(YearCreated)) <span class="op">%&gt;%</span><span class="st"> </span>
@@ -2684,9 +2686,12 @@ test.preds <span class="op">%&gt;%</span><span class="st"> </span>
        <span class="dt">y =</span> <span class="st">&quot;Predictions&quot;</span>)<span class="op">+</span>
 <span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
           <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
-                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))
-
-<span class="co"># plot confusion matrix</span>
+                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<p><img src="demo_files/figure-html/testplots-1.png" width="576" /></p>
+</div>
+<div id="confusion-matrix" class="section level3">
+<h3>Confusion Matrix</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot confusion matrix</span>
 <span class="kw">conf_mat</span>(test.preds, label, .pred_class)[[<span class="dv">1</span>]] <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">as_tibble</span>() <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(Prediction, Truth))<span class="op">+</span>
@@ -2712,10 +2717,13 @@ test.preds <span class="op">%&gt;%</span><span class="st"> </span>
           <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
         <span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">1.2</span>)))</code></pre></div>
-<p><img src="demo_files/figure-html/testplots-1.png" width="45%" /><img src="demo_files/figure-html/testplots-2.png" width="45%" /></p>
+<p><img src="demo_files/figure-html/confmat-1.png" width="576" /></p>
 </div>
-<div id="performance-curves" class="section level2">
+</div>
+<div id="performance-curves" class="section level2 tabset tabset-pills">
 <h2>Performance Curves</h2>
+<div id="roc-curve" class="section level3">
+<h3>ROC Curve</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot performance curves</span>
 test.preds <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">roc_curve</span>(<span class="dt">truth =</span> label, .pred_Yes) <span class="op">%&gt;%</span><span class="st"> </span>
@@ -2732,8 +2740,7 @@ test.preds <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw">c</span>(<span class="st">&quot;Yes&quot;</span> =<span class="st"> &quot;#377EB8&quot;</span>,
                                 <span class="st">&quot;No&quot;</span> =<span class="st"> &quot;#E41A1C&quot;</span>,
                                 <span class="st">&quot;Great&quot;</span> =<span class="st">  &quot;#4DAF4A&quot;</span>))<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;ROC&quot;</span>,
-       <span class="dt">subtitle =</span> <span class="kw">paste0</span>(<span class="st">&quot;Area under curve&quot;</span>,
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="kw">paste0</span>(<span class="st">&quot;Area under curve&quot;</span>,
                         <span class="st">&quot;: &quot;</span>,
                         test.metrics[test.metrics<span class="op">$</span>.metric <span class="op">==</span>
 <span class="st">                                       &quot;roc_auc&quot;</span>,]<span class="op">$</span>.estimate))<span class="op">+</span>
@@ -2742,41 +2749,47 @@ test.preds <span class="op">%&gt;%</span><span class="st"> </span>
                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
         <span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="dv">1</span>)),
         <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>(),
-        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">1.2</span>)))
-
-test.preds <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">pr_curve</span>(<span class="dt">truth =</span> label, .pred_Yes) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">autoplot</span>()<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_text</span>(<span class="dt">data =</span> test.metrics <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">              </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;f_meas&quot;</span>),
-            <span class="kw">aes</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(metric, <span class="st">&quot;: &quot;</span>, .estimate),
-                <span class="dt">color =</span> good,
-                <span class="dt">x =</span> <span class="fl">0.3</span>,
-                <span class="dt">y =</span> <span class="fl">0.2</span>),
-            <span class="dt">size =</span> <span class="dv">6</span>,
-            <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>,
-            <span class="dt">show.legend =</span> F)<span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw">c</span>(<span class="st">&quot;Yes&quot;</span> =<span class="st"> &quot;#377EB8&quot;</span>,
-                                <span class="st">&quot;No&quot;</span> =<span class="st"> &quot;#E41A1C&quot;</span>,
-                                <span class="st">&quot;Great&quot;</span> =<span class="st">  &quot;#4DAF4A&quot;</span>))<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Precision Recall Curve&quot;</span>,
-       <span class="dt">subtitle =</span> <span class="kw">paste0</span>(<span class="st">&quot;Area under curve&quot;</span>,
-                        <span class="st">&quot;: &quot;</span>,
-                        test.metrics[test.metrics<span class="op">$</span>.metric <span class="op">==</span>
-<span class="st">                                       &quot;pr_auc&quot;</span>,]<span class="op">$</span>.estimate))<span class="op">+</span>
-<span class="st">  </span><span class="kw">coord_fixed</span>(<span class="dt">ratio =</span> <span class="dv">1</span>, <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>,<span class="dv">1</span>))<span class="op">+</span>
-<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
-          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
-                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
-        <span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="dv">1</span>)),
-        <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>(),
-        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">1.2</span>)))
-
-test.preds <span class="op">%&gt;%</span><span class="st"> </span>
+        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">1.2</span>)))</code></pre></div>
+<p><img src="demo_files/figure-html/roccurve-1.png" width="576" /></p>
+</div>
+<div id="precision-recall-curve" class="section level3">
+<h3>Precision Recall Curve</h3>
+<pre><code>
+test.preds %&gt;% 
+  pr_curve(truth = label, .pred_Yes) %&gt;% 
+  autoplot()+
+  geom_text(data = test.metrics %&gt;% 
+              filter(.metric == &quot;f_meas&quot;),
+            aes(label = paste0(metric, &quot;: &quot;, .estimate),
+                color = good,
+                x = 0.3,
+                y = 0.2),
+            size = 6,
+            fontface = &quot;bold&quot;,
+            show.legend = F)+
+  scale_color_manual(values = c(&quot;Yes&quot; = &quot;#377EB8&quot;,
+                                &quot;No&quot; = &quot;#E41A1C&quot;,
+                                &quot;Great&quot; =  &quot;#4DAF4A&quot;))+
+  labs(title = paste0(&quot;Area under curve&quot;,
+                        &quot;: &quot;,
+                        test.metrics[test.metrics$.metric ==
+                                       &quot;pr_auc&quot;,]$.estimate))+
+  coord_fixed(ratio = 1, ylim = c(0,1))+
+  theme(panel.background =
+          element_rect(fill = &quot;white&quot;,
+                       colour = &quot;grey50&quot;),
+        axis.text = element_text(size = rel(1)),
+        panel.grid = element_blank(),
+        plot.subtitle = element_text(size = rel(1.2)))
+        </code></pre>
+</div>
+<div id="gain-curve" class="section level3">
+<h3>Gain Curve</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">test.preds <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">gain_curve</span>(<span class="dt">truth =</span> label, .pred_Yes) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">autoplot</span>()<span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_text</span>(<span class="dt">data =</span> test.metrics <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">              </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;gain_capture&quot;</span>),
+<span class="st">              </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;mcc&quot;</span>),
             <span class="kw">aes</span>(<span class="dt">label =</span> <span class="kw">paste0</span>(metric, <span class="st">&quot;: &quot;</span>, .estimate),
                 <span class="dt">color =</span> good,
                 <span class="dt">x =</span> <span class="dv">70</span>,
@@ -2787,15 +2800,21 @@ test.preds <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw">c</span>(<span class="st">&quot;Yes&quot;</span> =<span class="st"> &quot;#377EB8&quot;</span>,
                                 <span class="st">&quot;No&quot;</span> =<span class="st"> &quot;#E41A1C&quot;</span>,
                                 <span class="st">&quot;Great&quot;</span> =<span class="st">  &quot;#4DAF4A&quot;</span>))<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Gain&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="kw">paste0</span>(<span class="st">&quot;Gain Capture&quot;</span>,
+                           <span class="st">&quot;: &quot;</span>,
+                        test.metrics[test.metrics<span class="op">$</span>.metric <span class="op">==</span>
+<span class="st">                                       &quot;gain_capture&quot;</span>,]<span class="op">$</span>.estimate))<span class="op">+</span>
 <span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
           <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
         <span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="dv">1</span>)),
         <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>(),
-        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">1.2</span>)))
-
-test.preds <span class="op">%&gt;%</span><span class="st"> </span>
+        <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">1.2</span>)))</code></pre></div>
+<p><img src="demo_files/figure-html/gaincurve-1.png" width="576" /></p>
+</div>
+<div id="lift" class="section level3">
+<h3>Lift</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">test.preds <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">lift_curve</span>(<span class="dt">truth =</span> label, .pred_Yes) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">autoplot</span>()<span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_text</span>(<span class="dt">data =</span> test.metrics <span class="op">%&gt;%</span><span class="st"> </span>
@@ -2810,14 +2829,18 @@ test.preds <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> <span class="kw">c</span>(<span class="st">&quot;Yes&quot;</span> =<span class="st"> &quot;#377EB8&quot;</span>,
                                 <span class="st">&quot;No&quot;</span> =<span class="st"> &quot;#E41A1C&quot;</span>,
                                 <span class="st">&quot;Great&quot;</span> =<span class="st">  &quot;#4DAF4A&quot;</span>))<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Lift&quot;</span>)<span class="op">+</span>
+<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="kw">paste0</span>(<span class="st">&quot;Balanced Accuracy&quot;</span>,
+                           <span class="st">&quot;: &quot;</span>,
+                        test.metrics[test.metrics<span class="op">$</span>.metric <span class="op">==</span>
+<span class="st">                                       &quot;bal_accuracy&quot;</span>,]<span class="op">$</span>.estimate))<span class="op">+</span>
 <span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
           <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
         <span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="dv">1</span>)),
         <span class="dt">panel.grid =</span> <span class="kw">element_blank</span>(),
         <span class="dt">plot.subtitle =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">1.2</span>)))</code></pre></div>
-<p><img src="demo_files/figure-html/testcurves-1.png" width="45%" /><img src="demo_files/figure-html/testcurves-2.png" width="45%" /><img src="demo_files/figure-html/testcurves-3.png" width="45%" /><img src="demo_files/figure-html/testcurves-4.png" width="45%" /></p>
+<p><img src="demo_files/figure-html/lift-1.png" width="576" /></p>
+</div>
 </div>
 <div id="variable-importance" class="section level2">
 <h2>Variable Importance</h2>
@@ -2849,12 +2872,13 @@ final.imp <span class="op">%&gt;%</span><span class="st"> </span>
          <span class="dt">size =</span> <span class="st">&quot;none&quot;</span>,
          <span class="dt">alpha =</span> <span class="st">&quot;none&quot;</span>)<span class="op">+</span>
 <span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Normalized Importance&quot;</span>,
+       <span class="dt">subtitle =</span> <span class="st">&quot;Features de-identified&quot;</span>,
        <span class="dt">x =</span> <span class="ot">NULL</span>,
        <span class="dt">y =</span> <span class="ot">NULL</span>)<span class="op">+</span>
 <span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
           <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
                        <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>),
-        <span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">0.6</span>)))</code></pre></div>
+        <span class="dt">axis.text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="kw">rel</span>(<span class="fl">0.5</span>)))</code></pre></div>
 <p><img src="demo_files/figure-html/varimp-1.png" width="576" /></p>
 </div>
 <div id="test-predictions" class="section level2">
@@ -3173,7 +3197,7 @@ objs.model <span class="op">%&gt;%</span><span class="st"> </span>
         <span class="dt">panel.spacing =</span> <span class="kw">unit</span>(<span class="dv">0</span>, <span class="st">&quot;lines&quot;</span>))</code></pre></div>
 <p><img src="demo_files/figure-html/indicatorPlot-1.png" width="576" /></p>
 </div>
-<div id="numeric-variables" class="section level2 tabset">
+<div id="numeric-variables" class="section level2 tabset tabset-pills">
 <h2>Numeric Variables</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># numeric predictors</span>
 num.preds &lt;-<span class="st"> </span>objs.model <span class="op">%&gt;%</span><span class="st"> </span>
@@ -3239,7 +3263,7 @@ num.preds &lt;-<span class="st"> </span>objs.model <span class="op">%&gt;%</span
 <p><img src="demo_files/figure-html/unnamed-chunk-1-1.png" width="576" /></p>
 </div>
 </div>
-<div id="level-aggregation" class="section level2 tabset">
+<div id="level-aggregation" class="section level2 tabset tabset-pills">
 <h2>Level Aggregation</h2>
 <p>Original responses suppressed</p>
 <div id="leadsource" class="section level3">
@@ -3466,7 +3490,7 @@ vrs.mat <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">geom_node_text</span>(<span class="kw">aes</span>(<span class="dt">filter =</span> base,
                       <span class="dt">label =</span> name, 
                       <span class="dt">color =</span> name),
-                 <span class="dt">size =</span> <span class="dv">2</span>,
+                 <span class="dt">size =</span> <span class="fl">2.75</span>,
                  <span class="dt">fontface =</span> <span class="st">&quot;bold&quot;</span>, 
                  <span class="dt">show.legend =</span> F)<span class="op">+</span>
 <span class="st">  </span><span class="kw">guides</span>(<span class="dt">edge_color =</span><span class="st">&quot;none&quot;</span>)<span class="op">+</span>
@@ -3501,44 +3525,46 @@ vrs.mat <span class="op">%&gt;%</span><span class="st"> </span>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] dials_0.0.2          scales_1.0.0         rsample_0.0.4       
-##  [4] yardstick_0.0.2.9000 recipes_0.1.4.9000   parsnip_0.0.1       
-##  [7] ggraph_1.0.2         tidygraph_1.1.1      Boruta_6.0.0        
-## [10] xgboost_0.82.1       kernlab_0.9-27       ranger_0.10.1       
-## [13] RForcecom_1.1        forcats_0.3.0        stringr_1.3.1       
-## [16] dplyr_0.8.0.1        purrr_0.3.1          readr_1.1.1         
-## [19] tidyr_0.8.3          tibble_2.0.1         ggplot2_3.0.0       
-## [22] tidyverse_1.2.1      data.table_1.11.6   
+##  [1] caret_6.0-80         lattice_0.20-35      forcats_0.3.0       
+##  [4] stringr_1.3.1        purrr_0.3.1          readr_1.1.1         
+##  [7] tibble_2.0.1         tidyverse_1.2.1      dials_0.0.2         
+## [10] scales_1.0.0         rsample_0.0.4        tidyr_0.8.3         
+## [13] yardstick_0.0.2.9000 recipes_0.1.4.9000   dplyr_0.8.0.1       
+## [16] parsnip_0.0.1        ggraph_1.0.2         ggplot2_3.0.0       
+## [19] tidygraph_1.1.1      Boruta_6.0.0         xgboost_0.82.1      
+## [22] kernlab_0.9-27       ranger_0.10.1        RForcecom_1.1       
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] nlme_3.1-137        bitops_1.0-6        lubridate_1.7.4    
-##  [4] RColorBrewer_1.1-2  httr_1.3.1          tools_3.5.1        
-##  [7] backports_1.1.2     R6_2.2.2            rpart_4.1-13       
-## [10] Hmisc_4.1-1         lazyeval_0.2.1      mgcv_1.8-24        
-## [13] colorspace_1.3-2    nnet_7.3-12         withr_2.1.2        
-## [16] tidyselect_0.2.5    gridExtra_2.3       curl_3.2           
-## [19] compiler_3.5.1      cli_1.0.1           rvest_0.3.2        
-## [22] htmlTable_1.12      xml2_1.2.0          labeling_0.3       
-## [25] checkmate_1.8.5     digest_0.6.17       foreign_0.8-70     
-## [28] rmarkdown_1.12      base64enc_0.1-3     pkgconfig_2.0.2    
-## [31] htmltools_0.3.6     htmlwidgets_1.2     rlang_0.3.1        
-## [34] readxl_1.1.0        rstudioapi_0.7      farver_1.1.0       
-## [37] generics_0.0.2      jsonlite_1.5        acepack_1.4.1      
-## [40] RCurl_1.95-4.11     magrittr_1.5        Formula_1.2-3      
-## [43] Matrix_1.2-14       Rcpp_1.0.0          munsell_0.5.0      
-## [46] viridis_0.5.1       pROC_1.13.0         stringi_1.2.4      
-## [49] yaml_2.2.0          MASS_7.3-50         plyr_1.8.4         
-## [52] grid_3.5.1          ggrepel_0.8.0       crayon_1.3.4       
-## [55] lattice_0.20-35     haven_1.1.2         splines_3.5.1      
-## [58] hms_0.4.2           knitr_1.22          pillar_1.3.1       
-## [61] igraph_1.2.2        reshape2_1.4.3      XML_3.98-1.16      
-## [64] glue_1.3.0          evaluate_0.13       latticeExtra_0.6-28
-## [67] modelr_0.1.2        tweenr_1.0.0        cellranger_1.1.0   
-## [70] gtable_0.2.0        assertthat_0.2.0    gower_0.2.0        
-## [73] xfun_0.5            ggforce_0.1.3       prodlim_2018.04.18 
-## [76] broom_0.5.0         class_7.3-14        survival_2.42-3    
-## [79] viridisLite_0.3.0   timeDate_3043.102   lava_1.6.3         
-## [82] units_0.6-1         cluster_2.0.7-1     ipred_0.9-8</code></pre>
+##  [1] colorspace_1.3-2    class_7.3-14        htmlTable_1.12     
+##  [4] base64enc_0.1-3     rstudioapi_0.7      farver_1.1.0       
+##  [7] ggrepel_0.8.0       prodlim_2018.04.18  lubridate_1.7.4    
+## [10] xml2_1.2.0          codetools_0.2-15    splines_3.5.1      
+## [13] knitr_1.22          Formula_1.2-3       jsonlite_1.5       
+## [16] pROC_1.13.0         broom_0.5.0         cluster_2.0.7-1    
+## [19] ggforce_0.1.3       compiler_3.5.1      httr_1.3.1         
+## [22] backports_1.1.2     assertthat_0.2.0    Matrix_1.2-14      
+## [25] lazyeval_0.2.1      cli_1.0.1           tweenr_1.0.0       
+## [28] acepack_1.4.1       htmltools_0.3.6     tools_3.5.1        
+## [31] igraph_1.2.2        gtable_0.2.0        glue_1.3.0         
+## [34] reshape2_1.4.3      Rcpp_1.0.0          cellranger_1.1.0   
+## [37] nlme_3.1-137        iterators_1.0.10    timeDate_3043.102  
+## [40] gower_0.2.0         xfun_0.5            rvest_0.3.2        
+## [43] XML_3.98-1.16       MASS_7.3-50         ipred_0.9-8        
+## [46] hms_0.4.2           RColorBrewer_1.1-2  yaml_2.2.0         
+## [49] curl_3.2            gridExtra_2.3       rpart_4.1-13       
+## [52] latticeExtra_0.6-28 stringi_1.2.4       foreach_1.4.4      
+## [55] checkmate_1.8.5     e1071_1.7-0         lava_1.6.3         
+## [58] rlang_0.3.1         pkgconfig_2.0.2     bitops_1.0-6       
+## [61] evaluate_0.13       htmlwidgets_1.2     labeling_0.3       
+## [64] tidyselect_0.2.5    plyr_1.8.4          magrittr_1.5       
+## [67] R6_2.2.2            generics_0.0.2      Hmisc_4.1-1        
+## [70] pillar_1.3.1        haven_1.1.2         foreign_0.8-70     
+## [73] withr_2.1.2         units_0.6-1         survival_2.42-3    
+## [76] RCurl_1.95-4.11     nnet_7.3-12         modelr_0.1.2       
+## [79] crayon_1.3.4        rmarkdown_1.12      viridis_0.5.1      
+## [82] grid_3.5.1          readxl_1.1.0        data.table_1.11.6  
+## [85] ModelMetrics_1.2.0  digest_0.6.17       stats4_3.5.1       
+## [88] munsell_0.5.0       glmnet_2.0-16       viridisLite_0.3.0</code></pre>
 </div>
 </div>
 
