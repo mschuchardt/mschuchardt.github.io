@@ -15,80 +15,32 @@
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/cerulean.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
 
-
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css" data-origin="pandoc">
-div.sourceCode { overflow-x: auto; }
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; line-height: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
-
-</style>
-<script>
-// apply pandoc div.sourceCode style to pre.sourceCode instead
-(function() {
-  var sheets = document.styleSheets;
-  for (var i = 0; i < sheets.length; i++) {
-    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
-    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
-      var rule = rules[j];
-      // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
-      var style = rule.style.cssText;
-      // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
-      // replace div.sourceCode by a pre.sourceCode rule
-      sheets[i].deleteRule(j);
-      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
-    }
-  }
-})();
-</script>
 <style type="text/css">
   pre:not([class]) {
     background-color: white;
   }
 </style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
 
 
 <style type="text/css">
@@ -154,33 +106,33 @@ summary {
 <style type="text/css">
 /* padding for bootstrap navbar */
 body {
-  padding-top: 51px;
+  padding-top: 45px;
   padding-bottom: 40px;
 }
 /* offset scroll position for anchor links (for fixed navbar)  */
 .section h1 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 50px;
+  margin-top: -50px;
 }
 .section h2 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 50px;
+  margin-top: -50px;
 }
 .section h3 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 50px;
+  margin-top: -50px;
 }
 .section h4 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 50px;
+  margin-top: -50px;
 }
 .section h5 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 50px;
+  margin-top: -50px;
 }
 .section h6 {
-  padding-top: 56px;
-  margin-top: -56px;
+  padding-top: 50px;
+  margin-top: -50px;
 }
 .dropdown-submenu {
   position: relative;
@@ -355,7 +307,7 @@ $(document).ready(function () {
   </a>
 </li>
 <li>
-  <a href="mailto:mattschuchardt305@gmail.com">
+  <a href="mailto:matt@schu.in">
     <span class="fa fa-envelope"></span>
      
   </a>
@@ -375,348 +327,348 @@ $(document).ready(function () {
 
 
 <p>This example of data-driven matching using term frequency/inverse document frequecy was adapted from <a href="https://pdfs.semanticscholar.org/88ac/21866101654f77bbdca6a256481f9fe27691.pdf">Flexible String Matching Against Large Databases in Practice</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># general hospital information from CMS</span>
-general &lt;-<span class="st"> </span><span class="kw">fread</span>(<span class="st">&quot;https://data.medicare.gov/api/views/xubh-q36u/rows.csv?accessType=DOWNLOAD&quot;</span>)
+<pre class="r"><code># general hospital information from CMS
+general &lt;- fread(&quot;https://data.medicare.gov/api/views/xubh-q36u/rows.csv?accessType=DOWNLOAD&quot;)
                
-<span class="co"># list of hospitals in Alabama with name and address from</span>
-<span class="co"># https://en.wikipedia.org/wiki/List_of_hospitals_in_Alabama</span>
-alhosp.raw &lt;-<span class="st"> </span>rio<span class="op">::</span><span class="kw">import</span>(<span class="st">&quot;C:/Users/mschuchardt/Downloads/alhosp.xlsx&quot;</span>)</code></pre></div>
-<p>Objective: Match the list of 138 Alabama hospitals available on <a href="https://en.wikipedia.org/wiki/List_of_hospitals_in_Alabama">Wikipedia</a> to the 4,784 <a href="https://data.medicare.gov/Hospital-Compare/Hospital-General-Information/xubh-q36u">hospitals registered with Medicare</a>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># prep cms list</span>
-general &lt;-<span class="st"> </span>general <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">rename</span>(<span class="dt">ProviderID =</span> <span class="st">`</span><span class="dt">Provider ID</span><span class="st">`</span>,
-         <span class="dt">Hospital =</span> <span class="st">`</span><span class="dt">Hospital Name</span><span class="st">`</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">City =</span> <span class="kw">str_to_title</span>(City),
-         <span class="dt">Zip =</span> <span class="kw">ifelse</span>(<span class="kw">nchar</span>(<span class="st">`</span><span class="dt">ZIP Code</span><span class="st">`</span>) <span class="op">==</span><span class="st"> </span><span class="dv">5</span>,
-                      <span class="kw">as.character</span>(<span class="st">`</span><span class="dt">ZIP Code</span><span class="st">`</span>),
-                      <span class="kw">paste0</span>(<span class="st">&quot;0&quot;</span>, <span class="kw">as.character</span>(<span class="st">`</span><span class="dt">ZIP Code</span><span class="st">`</span>)))) 
+# list of hospitals in Alabama with name and address from
+# https://en.wikipedia.org/wiki/List_of_hospitals_in_Alabama
+alhosp.raw &lt;- rio::import(&quot;/media/matt/st1000/r/webpage/alhosp.xlsx&quot;)</code></pre>
+<p>Objective: Match the list of 138 Alabama hospitals available on <a href="https://en.wikipedia.org/wiki/List_of_hospitals_in_Alabama">Wikipedia</a> to the 4,772 <a href="https://data.medicare.gov/Hospital-Compare/Hospital-General-Information/xubh-q36u">hospitals registered with Medicare</a>.</p>
+<pre class="r"><code># prep cms list
+general &lt;- general %&gt;% 
+  rename(ProviderID = `Provider ID`,
+         Hospital = `Hospital Name`) %&gt;% 
+  mutate(City = str_to_title(City),
+         Zip = ifelse(nchar(`ZIP Code`) == 5,
+                      as.character(`ZIP Code`),
+                      paste0(&quot;0&quot;, as.character(`ZIP Code`)))) 
 
-<span class="co"># extract address and zip from notes column</span>
-<span class="co"># remove superscript from names</span>
-<span class="co"># exclude closed hospitals</span>
-alhosp &lt;-<span class="st"> </span>alhosp.raw <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">separate</span>(Notes, <span class="kw">c</span>(<span class="st">&quot;Notes&quot;</span>, <span class="st">&quot;Details&quot;</span>), <span class="dt">sep =</span> <span class="st">&quot;; &quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">separate</span>(Notes, <span class="kw">c</span>(<span class="st">&quot;Address&quot;</span>, <span class="st">&quot;Extra&quot;</span>), <span class="dt">sep =</span> <span class="st">&quot;, &quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Zip =</span> <span class="kw">str_sub</span>(Extra, <span class="dv">1</span>, <span class="dv">5</span>),
-         <span class="dt">Hospital =</span> <span class="kw">str_remove_all</span>(Hospital, <span class="st">&quot;</span><span class="ch">\\</span><span class="st">[.*$&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(Zip)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(<span class="kw">str_detect</span>(Zip, <span class="st">&quot;[0-9]&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(<span class="kw">is.na</span>(Details) <span class="op">|</span>
-<span class="st">           </span><span class="op">!</span><span class="kw">str_detect</span>(Details, <span class="st">&quot;Closed&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Id =</span> <span class="kw">row_number</span>())</code></pre></div>
+# extract address and zip from notes column
+# remove superscript from names
+# exclude closed hospitals
+alhosp &lt;- alhosp.raw %&gt;% 
+  separate(Notes, c(&quot;Notes&quot;, &quot;Details&quot;), sep = &quot;; &quot;) %&gt;% 
+  separate(Notes, c(&quot;Address&quot;, &quot;Extra&quot;), sep = &quot;, &quot;) %&gt;% 
+  mutate(Zip = str_sub(Extra, 1, 5),
+         Hospital = str_remove_all(Hospital, &quot;\\[.*$&quot;)) %&gt;% 
+  filter(!is.na(Zip)) %&gt;% 
+  filter(str_detect(Zip, &quot;[0-9]&quot;)) %&gt;% 
+  filter(is.na(Details) |
+           !str_detect(Details, &quot;Closed&quot;)) %&gt;% 
+  mutate(Id = row_number())</code></pre>
 <p>14 closed hospitals were removed from the list of Alabama hospitals and address and zip code extracted from the ‘Notes’ column.</p>
 <p>The first step is tokenizing the name and address attributes. US Postal guidelines are used to standardize the address tokens.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">  <span class="co"># calculate l2 norm of attribute ----</span>
-  euc_norm &lt;-<span class="st"> </span><span class="cf">function</span>(x){
-    x1 &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(x)
-    out &lt;-<span class="st"> </span><span class="kw">norm</span>(x1, <span class="st">&quot;f&quot;</span>)
+<pre class="r"><code>  # calculate l2 norm of attribute ----
+  euc_norm &lt;- function(x){
+    x1 &lt;- as.matrix(x)
+    out &lt;- norm(x1, &quot;f&quot;)
   }
   
-  <span class="co"># create dynamic weight from l2 norm of two attributes ----</span>
-  dynamic_weight &lt;-<span class="st"> </span><span class="cf">function</span>(x, y){
-    out &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">sum</span>((x<span class="op">^</span><span class="dv">2</span>) <span class="op">+</span><span class="st"> </span>(y<span class="op">^</span><span class="dv">2</span>)))
+  # create dynamic weight from l2 norm of two attributes ----
+  dynamic_weight &lt;- function(x, y){
+    out &lt;- sqrt(sum((x^2) + (y^2)))
   }
   
-<span class="co"># prepare for matching ----</span>
-<span class="co"># calculate term frequency and inverse document frequency from</span>
-<span class="co"># match table name &amp; address</span>
-<span class="co"># compute dynamic weight</span>
+# prepare for matching ----
+# calculate term frequency and inverse document frequency from
+# match table name &amp; address
+# compute dynamic weight
 
-<span class="co"># number of unique values by attribute</span>
-<span class="co"># number of unique names &amp; addresses</span>
+# number of unique values by attribute
+# number of unique names &amp; addresses
 Base.size &lt;-
-<span class="st">      </span><span class="kw">as_tibble</span>(
-        <span class="kw">list</span>(
-          <span class="st">&quot;size.name&quot;</span> =
-<span class="st">            </span><span class="kw">length</span>(<span class="kw">unique</span>(general<span class="op">$</span>Hospital)),
-          <span class="st">&quot;size.address&quot;</span> =
-<span class="st">            </span><span class="kw">length</span>(<span class="kw">unique</span>(general<span class="op">$</span>Address)))
+      as_tibble(
+        list(
+          &quot;size.name&quot; =
+            length(unique(general$Hospital)),
+          &quot;size.address&quot; =
+            length(unique(general$Address)))
         )
 
-<span class="co"># prep target -----</span>
-<span class="co"># split name into tokens</span>
-<span class="co"># one token per row</span>
-<span class="co"># count token appearance per record id</span>
-<span class="co"># count record ids per token</span>
-<span class="co"># log of total names/records per token is inverse doc freq</span>
-Base.idf.name &lt;-<span class="st"> </span>general <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="dt">tid =</span> ProviderID,
-         <span class="dt">Name =</span> Hospital) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span>tidytext<span class="op">::</span><span class="kw">unnest_tokens</span>(word, Name) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(word)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, <span class="dt">token =</span> word) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">group_by</span>(tid, token) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">term.freq =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">group_by</span>(token) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">doc.freq =</span> <span class="kw">n_distinct</span>(tid),
-         <span class="dt">idf =</span> <span class="kw">log</span>((Base.size<span class="op">$</span>size.name)<span class="op">/</span>(doc.freq))) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">weights =</span> term.freq <span class="op">*</span><span class="st"> </span>idf) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, token, term.freq, idf, weights)
+# prep target -----
+# split name into tokens
+# one token per row
+# count token appearance per record id
+# count record ids per token
+# log of total names/records per token is inverse doc freq
+Base.idf.name &lt;- general %&gt;%
+  select(tid = ProviderID,
+         Name = Hospital) %&gt;% 
+  tidytext::unnest_tokens(word, Name) %&gt;%
+  filter(!is.na(word)) %&gt;%
+  select(tid, token = word) %&gt;%
+  group_by(tid, token) %&gt;%
+  summarise(term.freq = n()) %&gt;%
+  group_by(token) %&gt;%
+  mutate(doc.freq = n_distinct(tid),
+         idf = log((Base.size$size.name)/(doc.freq))) %&gt;%
+  ungroup() %&gt;%
+  mutate(weights = term.freq * idf) %&gt;%
+  select(tid, token, term.freq, idf, weights)
 
-<span class="co"># repeat for address</span>
-<span class="co"># standardize address tokens</span>
-Base.idf.add &lt;-<span class="st"> </span>general <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(<span class="dt">tid =</span> ProviderID,
-         Address) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span>tidytext<span class="op">::</span><span class="kw">unnest_tokens</span>(word, Address) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(word)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">left_join</span>(postal.standards, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;word&quot;</span> =<span class="st"> &quot;address.token&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">token =</span> <span class="kw">ifelse</span>(<span class="kw">is.na</span>(address.standard), word, address.standard)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">select</span>(tid, token) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">group_by</span>(tid, token) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">term.freq =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">group_by</span>(token) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">doc.freq =</span> <span class="kw">n_distinct</span>(tid),
-         <span class="dt">idf =</span> <span class="kw">log</span>((Base.size<span class="op">$</span>size.address)<span class="op">/</span>(doc.freq))) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">weights =</span> term.freq <span class="op">*</span><span class="st"> </span>idf) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, token, term.freq, idf, weights)
+# repeat for address
+# standardize address tokens
+Base.idf.add &lt;- general %&gt;%
+  select(tid = ProviderID,
+         Address) %&gt;% 
+  tidytext::unnest_tokens(word, Address) %&gt;%
+  filter(!is.na(word)) %&gt;%
+  left_join(postal.standards, by = c(&quot;word&quot; = &quot;address.token&quot;)) %&gt;% 
+  mutate(token = ifelse(is.na(address.standard), word, address.standard)) %&gt;% 
+  select(tid, token) %&gt;%
+  group_by(tid, token) %&gt;%
+  summarise(term.freq = n()) %&gt;%
+  group_by(token) %&gt;%
+  mutate(doc.freq = n_distinct(tid),
+         idf = log((Base.size$size.address)/(doc.freq))) %&gt;%
+  ungroup() %&gt;%
+  mutate(weights = term.freq * idf) %&gt;%
+  select(tid, token, term.freq, idf, weights)
 
-<span class="co"># compute total weight for each record&#39;s name &amp; address</span>
-<span class="co"># then dynamic weight</span>
-Base.length &lt;-<span class="st"> </span>Base.idf.name <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, weights) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">nest</span>(<span class="op">-</span>tid) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">l.x =</span> <span class="kw">map_dbl</span>(data, euc_norm)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, l.x) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">full_join</span>(Base.idf.add <span class="op">%&gt;%</span>
-<span class="st">              </span><span class="kw">select</span>(tid, weights) <span class="op">%&gt;%</span>
-<span class="st">              </span><span class="kw">nest</span>(<span class="op">-</span>tid) <span class="op">%&gt;%</span>
-<span class="st">              </span><span class="kw">mutate</span>(<span class="dt">l.y =</span> <span class="kw">map_dbl</span>(data, euc_norm)) <span class="op">%&gt;%</span>
-<span class="st">              </span><span class="kw">select</span>(tid, l.y)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate_if</span>(is.numeric, replace_na, <span class="dv">0</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">group_by</span>(tid) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">len =</span> <span class="kw">map2_dbl</span>(l.x, l.y, dynamic_weight)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, l.x, l.y, len)
+# compute total weight for each record&#39;s name &amp; address
+# then dynamic weight
+Base.length &lt;- Base.idf.name %&gt;%
+  select(tid, weights) %&gt;%
+  nest(-tid) %&gt;%
+  mutate(l.x = map_dbl(data, euc_norm)) %&gt;%
+  select(tid, l.x) %&gt;%
+  full_join(Base.idf.add %&gt;%
+              select(tid, weights) %&gt;%
+              nest(-tid) %&gt;%
+              mutate(l.y = map_dbl(data, euc_norm)) %&gt;%
+              select(tid, l.y)) %&gt;%
+  mutate_if(is.numeric, replace_na, 0) %&gt;%
+  group_by(tid) %&gt;%
+  mutate(len = map2_dbl(l.x, l.y, dynamic_weight)) %&gt;%
+  ungroup() %&gt;%
+  select(tid, l.x, l.y, len)
 
-<span class="co"># weight by name token </span>
-idf.name &lt;-<span class="st"> </span>Base.idf.name <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(token, idf) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">unique</span>()
+# weight by name token 
+idf.name &lt;- Base.idf.name %&gt;%
+  select(token, idf) %&gt;%
+  unique()
 
-<span class="co">#  weight by address token</span>
-idf.address &lt;-<span class="st"> </span>Base.idf.add <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(token, idf) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">unique</span>()</code></pre></div>
+#  weight by address token
+idf.address &lt;- Base.idf.add %&gt;%
+  select(token, idf) %&gt;%
+  unique()</code></pre>
 <p>The tokens are weighted based on term frequency and inverse document frequency in the target data set. Using TF/IDF to weight the tokens increases the match value of rare terms and decreases the match value of common words, so that a match including Keller is<br />
 3 times as important as a match including both medical and center.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">idf.name <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Attribute =</span> <span class="st">&quot;Name&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">bind_rows</span>(idf.address <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">              </span><span class="kw">mutate</span>(<span class="dt">Attribute =</span> <span class="st">&quot;Address&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(idf))<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_freqpoly</span>(<span class="kw">aes</span>(<span class="dt">color =</span> Attribute),
-                <span class="dt">bins =</span> <span class="dv">70</span>,
-                <span class="dt">size =</span> <span class="fl">1.2</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">scale_color_brewer</span>(<span class="dt">palette =</span> <span class="st">&quot;Set1&quot;</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> <span class="st">&quot;Inverse Document Frequency&quot;</span>,
-       <span class="dt">subtitle =</span> <span class="kw">paste</span>(<span class="st">&quot;For&quot;</span>,
-                        <span class="kw">comma</span>(<span class="kw">sum</span>(<span class="kw">nrow</span>(idf.name),
-                                  <span class="kw">nrow</span>(idf.address))),
-                        <span class="st">&quot;tokens&quot;</span>),
-       <span class="dt">x =</span> <span class="ot">NULL</span>,
-       <span class="dt">y =</span> <span class="st">&quot;Tokens&quot;</span>)<span class="op">+</span>
-<span class="st">    </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
-          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
-                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<pre class="r"><code>idf.name %&gt;% 
+  mutate(Attribute = &quot;Name&quot;) %&gt;% 
+  bind_rows(idf.address %&gt;% 
+              mutate(Attribute = &quot;Address&quot;)) %&gt;% 
+  ggplot(aes(idf))+
+  geom_freqpoly(aes(color = Attribute),
+                bins = 70,
+                size = 1.2)+
+  scale_color_brewer(palette = &quot;Set1&quot;)+
+  labs(title = &quot;Inverse Document Frequency&quot;,
+       subtitle = paste(&quot;For&quot;,
+                        comma(sum(nrow(idf.name),
+                                  nrow(idf.address))),
+                        &quot;tokens&quot;),
+       x = NULL,
+       y = &quot;Tokens&quot;)+
+    theme(panel.background =
+          element_rect(fill = &quot;white&quot;,
+                       colour = &quot;grey50&quot;))</code></pre>
 <p><img src="match_files/figure-html/idfplot-1.png" width="576" /></p>
 <p>The weights calculated on the target data are then applied to the attribute tokens from the search data set.</p>
 <p>The attribute weights for each record are normalized and then dynamically weighted, increasing the weight of rare name tokens in the presence of common address tokens and vice versa.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># normalize name weights</span>
-Base.weights.name &lt;-<span class="st"> </span>Base.idf.name <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">inner_join</span>(Base.length, <span class="dt">by =</span> <span class="st">&quot;tid&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">t.weight =</span> weights<span class="op">/</span>l.x,
-         <span class="dt">t.weight.dyn =</span> weights<span class="op">/</span>len) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, token, t.weight.dyn)
+<pre class="r"><code># normalize name weights
+Base.weights.name &lt;- Base.idf.name %&gt;%
+  inner_join(Base.length, by = &quot;tid&quot;) %&gt;%
+  mutate(t.weight = weights/l.x,
+         t.weight.dyn = weights/len) %&gt;%
+  select(tid, token, t.weight.dyn)
 
-<span class="co"># normalize address weights</span>
-Base.weights.add &lt;-<span class="st"> </span>Base.idf.add <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">inner_join</span>(Base.length, <span class="dt">by =</span> <span class="st">&quot;tid&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">t.weight =</span> weights<span class="op">/</span>l.y,
-         <span class="dt">t.weight.dyn =</span> weights<span class="op">/</span>len) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">select</span>(tid, token, t.weight.dyn)
+# normalize address weights
+Base.weights.add &lt;- Base.idf.add %&gt;%
+  inner_join(Base.length, by = &quot;tid&quot;) %&gt;%
+  mutate(t.weight = weights/l.y,
+         t.weight.dyn = weights/len) %&gt;%
+  select(tid, token, t.weight.dyn)
 
-<span class="co"># update to data.tables</span>
-<span class="kw">setDT</span>(Base.weights.name)
-<span class="kw">setDT</span>(Base.weights.add)
+# update to data.tables
+setDT(Base.weights.name)
+setDT(Base.weights.add)
 
-<span class="co"># prep source ----</span>
-<span class="co"># apply weighting to matching name </span>
-<span class="co"># split by tokens and count</span>
-<span class="co"># use idf from match table</span>
-Search.idf.name &lt;-<span class="st"> </span>alhosp <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(<span class="dt">sid =</span> Id,
-        <span class="dt">Name =</span> Hospital) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st"> </span>tidytext<span class="op">::</span><span class="kw">unnest_tokens</span>(word, Name) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(word)) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, <span class="dt">token =</span> word) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">group_by</span>(sid, token) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">summarise</span>(<span class="dt">term.freq =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">inner_join</span>(idf.name) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">weights =</span> term.freq <span class="op">*</span><span class="st"> </span>idf) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, token, weights)
+# prep source ----
+# apply weighting to matching name 
+# split by tokens and count
+# use idf from match table
+Search.idf.name &lt;- alhosp %&gt;%
+ select(sid = Id,
+        Name = Hospital) %&gt;% 
+ tidytext::unnest_tokens(word, Name) %&gt;%
+ filter(!is.na(word)) %&gt;%
+ select(sid, token = word) %&gt;%
+ group_by(sid, token) %&gt;%
+ summarise(term.freq = n()) %&gt;%
+ ungroup() %&gt;%
+ inner_join(idf.name) %&gt;%
+ mutate(weights = term.freq * idf) %&gt;%
+ select(sid, token, weights)
     
-<span class="co"># apply weighting to matching address</span>
-Search.idf.add &lt;-<span class="st"> </span>alhosp <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(<span class="dt">sid =</span> Id,
-        Address) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st"> </span>tidytext<span class="op">::</span><span class="kw">unnest_tokens</span>(word, Address) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">filter</span>(<span class="op">!</span><span class="kw">is.na</span>(word)) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">left_join</span>(postal.standards, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;word&quot;</span> =<span class="st"> &quot;address.token&quot;</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">token =</span> <span class="kw">ifelse</span>(<span class="kw">is.na</span>(address.standard), word, address.standard)) <span class="op">%&gt;%</span><span class="st">  </span>
-<span class="st"> </span><span class="kw">select</span>(sid, token) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">group_by</span>(sid, token) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">summarise</span>(<span class="dt">term.freq =</span> <span class="kw">n</span>()) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">inner_join</span>(idf.address) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">weights =</span> term.freq <span class="op">*</span><span class="st"> </span>idf) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, token, weights)
+# apply weighting to matching address
+Search.idf.add &lt;- alhosp %&gt;%
+ select(sid = Id,
+        Address) %&gt;% 
+ tidytext::unnest_tokens(word, Address) %&gt;%
+ filter(!is.na(word)) %&gt;%
+ left_join(postal.standards, by = c(&quot;word&quot; = &quot;address.token&quot;)) %&gt;% 
+ mutate(token = ifelse(is.na(address.standard), word, address.standard)) %&gt;%  
+ select(sid, token) %&gt;%
+ group_by(sid, token) %&gt;%
+ summarise(term.freq = n()) %&gt;%
+ ungroup() %&gt;%
+ inner_join(idf.address) %&gt;%
+ mutate(weights = term.freq * idf) %&gt;%
+ select(sid, token, weights)
 
-<span class="co"># compute total weight for each record&#39;s name &amp; address</span>
-<span class="co"># then dynamic weight</span>
-Search.length &lt;-<span class="st"> </span>Search.idf.name <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, weights) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">nest</span>(<span class="op">-</span>sid) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">l.x =</span> <span class="kw">map_dbl</span>(data, euc_norm)) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, l.x) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">full_join</span>(Search.idf.add <span class="op">%&gt;%</span>
-<span class="st">             </span><span class="kw">select</span>(sid, weights) <span class="op">%&gt;%</span>
-<span class="st">             </span><span class="kw">nest</span>(<span class="op">-</span>sid) <span class="op">%&gt;%</span>
-<span class="st">             </span><span class="kw">mutate</span>(<span class="dt">l.y =</span> <span class="kw">map_dbl</span>(data, euc_norm)) <span class="op">%&gt;%</span>
-<span class="st">             </span><span class="kw">select</span>(sid, l.y)) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">mutate_if</span>(is.numeric, replace_na, <span class="dv">0</span>) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">group_by</span>(sid) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">len =</span> <span class="kw">map2_dbl</span>(l.x, l.y, dynamic_weight)) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, l.x, l.y, len)
+# compute total weight for each record&#39;s name &amp; address
+# then dynamic weight
+Search.length &lt;- Search.idf.name %&gt;%
+ select(sid, weights) %&gt;%
+ nest(-sid) %&gt;%
+ mutate(l.x = map_dbl(data, euc_norm)) %&gt;%
+ select(sid, l.x) %&gt;%
+ full_join(Search.idf.add %&gt;%
+             select(sid, weights) %&gt;%
+             nest(-sid) %&gt;%
+             mutate(l.y = map_dbl(data, euc_norm)) %&gt;%
+             select(sid, l.y)) %&gt;%
+ mutate_if(is.numeric, replace_na, 0) %&gt;%
+ group_by(sid) %&gt;%
+ mutate(len = map2_dbl(l.x, l.y, dynamic_weight)) %&gt;%
+ ungroup() %&gt;%
+ select(sid, l.x, l.y, len)
 
-<span class="co"># normalize name weights</span>
-Search.weights.name &lt;-<span class="st"> </span>Search.idf.name <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">inner_join</span>(Search.length, <span class="dt">by =</span> <span class="st">&quot;sid&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">s.weight =</span> weights<span class="op">/</span>l.x,
-        <span class="dt">s.weight.dyn =</span> weights<span class="op">/</span>len) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, token, s.weight.dyn)
+# normalize name weights
+Search.weights.name &lt;- Search.idf.name %&gt;%
+ inner_join(Search.length, by = &quot;sid&quot;) %&gt;%
+ mutate(s.weight = weights/l.x,
+        s.weight.dyn = weights/len) %&gt;%
+ select(sid, token, s.weight.dyn)
 
-<span class="co"># normalize address weights</span>
-Search.weights.add &lt;-<span class="st"> </span>Search.idf.add <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">inner_join</span>(Search.length, <span class="dt">by =</span> <span class="st">&quot;sid&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">mutate</span>(<span class="dt">s.weight =</span> weights<span class="op">/</span>l.y,
-        <span class="dt">s.weight.dyn =</span> weights<span class="op">/</span>len) <span class="op">%&gt;%</span>
-<span class="st"> </span><span class="kw">select</span>(sid, token, s.weight.dyn)
+# normalize address weights
+Search.weights.add &lt;- Search.idf.add %&gt;%
+ inner_join(Search.length, by = &quot;sid&quot;) %&gt;%
+ mutate(s.weight = weights/l.y,
+        s.weight.dyn = weights/len) %&gt;%
+ select(sid, token, s.weight.dyn)
 
-<span class="kw">setDT</span>(Search.weights.name)
-<span class="kw">setDT</span>(Search.weights.add)</code></pre></div>
+setDT(Search.weights.name)
+setDT(Search.weights.add)</code></pre>
 <p>The attribute tokens are matched and the combined weight cacluated for each pair of matching records. Matches below a user-defined threshold are excluded.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># exclude matches below</span>
-threshold &lt;-<span class="st"> </span><span class="fl">0.3</span>
+<pre class="r"><code># exclude matches below
+threshold &lt;- 0.3
 
-<span class="co"># match name tokens</span>
+# match name tokens
 match.name &lt;-
-<span class="st">      </span>Base.weights.name[Search.weights.name,
-                        on =<span class="st"> &quot;token&quot;</span>,
-                        allow.cartesian =<span class="st"> </span>T
+      Base.weights.name[Search.weights.name,
+                        on = &quot;token&quot;,
+                        allow.cartesian = T
                         ][,
-                          .(<span class="dt">weight.x.dyn =</span>
-                              <span class="kw">sum</span>(t.weight.dyn <span class="op">*</span>
-<span class="st">                                    </span>s.weight.dyn)),
-                          by =<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;tid&quot;</span>,
-                                 <span class="st">&quot;sid&quot;</span>)
-                          ][weight.x.dyn <span class="op">&gt;=</span><span class="st"> </span>threshold]
+                          .(weight.x.dyn =
+                              sum(t.weight.dyn *
+                                    s.weight.dyn)),
+                          by = c(&quot;tid&quot;,
+                                 &quot;sid&quot;)
+                          ][weight.x.dyn &gt;= threshold]
 
-<span class="kw">setnames</span>(match.name, 
-         <span class="kw">c</span>(<span class="st">&quot;tid&quot;</span>, <span class="st">&quot;sid&quot;</span>),
-         <span class="kw">c</span>(<span class="st">&quot;ProviderId&quot;</span>, <span class="st">&quot;Id&quot;</span>))
+setnames(match.name, 
+         c(&quot;tid&quot;, &quot;sid&quot;),
+         c(&quot;ProviderId&quot;, &quot;Id&quot;))
 
-<span class="kw">setkeyv</span>(match.name, <span class="dt">cols =</span> <span class="kw">c</span>(<span class="st">&quot;ProviderId&quot;</span>, <span class="st">&quot;Id&quot;</span>))
+setkeyv(match.name, cols = c(&quot;ProviderId&quot;, &quot;Id&quot;))
    
-<span class="co"># match address tokens </span>
+# match address tokens 
 match.add &lt;-
-<span class="st">      </span>Base.weights.add[Search.weights.add,
-                       on =<span class="st"> &quot;token&quot;</span>,
-                       allow.cartesian =<span class="st"> </span>T
+      Base.weights.add[Search.weights.add,
+                       on = &quot;token&quot;,
+                       allow.cartesian = T
                        ][,
-                         .(<span class="dt">weight.y.dyn =</span>
-                             <span class="kw">sum</span>(t.weight.dyn <span class="op">*</span>
-<span class="st">                                   </span>s.weight.dyn)),
-                         by =<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;tid&quot;</span>,
-                                <span class="st">&quot;sid&quot;</span>)
-                         ][weight.y.dyn <span class="op">&gt;=</span><span class="st"> </span>threshold]
+                         .(weight.y.dyn =
+                             sum(t.weight.dyn *
+                                   s.weight.dyn)),
+                         by = c(&quot;tid&quot;,
+                                &quot;sid&quot;)
+                         ][weight.y.dyn &gt;= threshold]
 
-<span class="kw">setnames</span>(match.add, 
-         <span class="kw">c</span>(<span class="st">&quot;tid&quot;</span>, <span class="st">&quot;sid&quot;</span>),
-         <span class="kw">c</span>(<span class="st">&quot;ProviderId&quot;</span>, <span class="st">&quot;Id&quot;</span>))
+setnames(match.add, 
+         c(&quot;tid&quot;, &quot;sid&quot;),
+         c(&quot;ProviderId&quot;, &quot;Id&quot;))
 
-<span class="kw">setkeyv</span>(match.add, <span class="dt">cols =</span> <span class="kw">c</span>(<span class="st">&quot;ProviderId&quot;</span>, <span class="st">&quot;Id&quot;</span>))
+setkeyv(match.add, cols = c(&quot;ProviderId&quot;, &quot;Id&quot;))
 
-<span class="co"># combine matches</span>
-match.weight &lt;-<span class="st"> </span><span class="kw">merge</span>(match.add, match.name, <span class="dt">all =</span> <span class="ot">TRUE</span>)
+# combine matches
+match.weight &lt;- merge(match.add, match.name, all = TRUE)
 
-<span class="co"># add secondary attributes, city, state, zip</span>
-match.weight &lt;-<span class="st"> </span>match.weight <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="kw">mutate</span>(<span class="dt">weight.x.dyn =</span> <span class="kw">ifelse</span>(<span class="kw">is.na</span>(weight.x.dyn), <span class="dv">0</span>,
+# add secondary attributes, city, state, zip
+match.weight &lt;- match.weight %&gt;%
+    mutate(weight.x.dyn = ifelse(is.na(weight.x.dyn), 0,
                                  weight.x.dyn),
-           <span class="dt">weight.y.dyn =</span> <span class="kw">ifelse</span>(<span class="kw">is.na</span>(weight.y.dyn), <span class="dv">0</span>,
+           weight.y.dyn = ifelse(is.na(weight.y.dyn), 0,
                                  weight.y.dyn),
-           <span class="dt">match.weight.dyn =</span> weight.x.dyn <span class="op">+</span><span class="st"> </span>weight.y.dyn) <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="kw">select</span>(ProviderId,
+           match.weight.dyn = weight.x.dyn + weight.y.dyn) %&gt;%
+    select(ProviderId,
            Id,
-           match.weight.dyn) <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="kw">left_join</span>(general <span class="op">%&gt;%</span>
-<span class="st">                </span><span class="kw">select</span>(<span class="dt">ProviderId =</span> ProviderID,
+           match.weight.dyn) %&gt;%
+    left_join(general %&gt;%
+                select(ProviderId = ProviderID,
                        Hospital,
                        City,
                        State,
-                       Zip)) <span class="op">%&gt;%</span>
-<span class="st">    </span><span class="kw">left_join</span>(alhosp <span class="op">%&gt;%</span>
-<span class="st">                </span><span class="kw">select</span>(Id,
+                       Zip)) %&gt;%
+    left_join(alhosp %&gt;%
+                select(Id,
                        Hospital,
                        City,
                        State,
-                       Zip), <span class="dt">by =</span> <span class="st">&quot;Id&quot;</span>)</code></pre></div>
-<p>310 potential matches were identified. The remaining address components (city, state and zip), were used in combination with the match weights to refine the matches.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># calculate secondary matches </span>
-<span class="co"># rank search matches</span>
-matched &lt;-<span class="st"> </span>match.weight <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">City =</span> <span class="kw">str_to_lower</span>(<span class="kw">str_remove_all</span>(City.x, <span class="st">&quot; |&#39;&quot;</span>)) <span class="op">==</span><span class="st"> </span>
-<span class="st">           </span><span class="kw">str_to_lower</span>(<span class="kw">str_remove_all</span>(City.y, <span class="st">&quot; |&#39;&quot;</span>)),
-         <span class="dt">State =</span> State.x <span class="op">==</span><span class="st"> </span>State.y,
-         <span class="dt">Zip =</span> Zip.x <span class="op">==</span><span class="st"> </span>Zip.y,
-         <span class="dt">secondary.weight =</span> City <span class="op">+</span><span class="st"> </span>State <span class="op">+</span><span class="st"> </span>Zip,
-         <span class="dt">weight =</span> match.weight.dyn <span class="op">+</span><span class="st"> </span>
-<span class="st">           </span>(secondary.weight <span class="op">/</span><span class="st"> </span><span class="dv">3</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(Id) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">rank.id =</span> <span class="kw">dense_rank</span>(<span class="kw">desc</span>(weight))) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(rank.id <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">strength =</span> <span class="kw">floor</span>(weight))
+                       Zip), by = &quot;Id&quot;)</code></pre>
+<p>312 potential matches were identified. The remaining address components (city, state and zip), were used in combination with the match weights to refine the matches.</p>
+<pre class="r"><code># calculate secondary matches 
+# rank search matches
+matched &lt;- match.weight %&gt;% 
+  mutate(City = str_to_lower(str_remove_all(City.x, &quot; |&#39;&quot;)) == 
+           str_to_lower(str_remove_all(City.y, &quot; |&#39;&quot;)),
+         State = State.x == State.y,
+         Zip = Zip.x == Zip.y,
+         secondary.weight = City + State + Zip,
+         weight = match.weight.dyn + 
+           (secondary.weight / 3)) %&gt;% 
+  group_by(Id) %&gt;% 
+  mutate(rank.id = dense_rank(desc(weight))) %&gt;% 
+  ungroup() %&gt;% 
+  filter(rank.id == 1) %&gt;% 
+  mutate(strength = floor(weight))
 
-<span class="co"># select best match by target record</span>
-matched.final &lt;-<span class="st"> </span>matched <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(secondary.weight <span class="op">&gt;=</span><span class="st"> </span><span class="dv">2</span>) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">group_by</span>(ProviderId) <span class="op">%&gt;%</span><span class="st"> </span>
-<span class="st">  </span><span class="kw">filter</span>(weight <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(weight))</code></pre></div>
+# select best match by target record
+matched.final &lt;- matched %&gt;% 
+  filter(secondary.weight &gt;= 2) %&gt;% 
+  group_by(ProviderId) %&gt;% 
+  filter(weight == max(weight))</code></pre>
 <p>The 118 were further reduced to 87 by selecting the best match per target Id.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># exclude LTAC and behavioral hospitals from match rate calculation</span>
-<span class="kw">ggplot</span>(matched.final, <span class="kw">aes</span>(weight))<span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">bins =</span> <span class="dv">15</span>,
-                 <span class="dt">fill =</span> <span class="st">&quot;#377EB8&quot;</span>)<span class="op">+</span>
-<span class="st">  </span><span class="kw">labs</span>(<span class="dt">title =</span> 
-         <span class="kw">paste0</span>(<span class="kw">round</span>(<span class="kw">nrow</span>(matched.final)<span class="op">/</span>
-<span class="st">                        </span><span class="kw">nrow</span>(<span class="kw">filter</span>(alhosp,
-                                    <span class="op">!</span><span class="kw">str_detect</span>(Hospital,
-                                                <span class="st">&quot;Beha|Long Term|LTAC&quot;</span>))),
-                             <span class="dv">2</span>)<span class="op">*</span><span class="dv">100</span>,
-                      <span class="st">&quot;% of records matched&quot;</span>),
-       <span class="dt">subtitle =</span> <span class="kw">paste</span>(<span class="kw">nrow</span>(<span class="kw">filter</span>(matched.final, weight <span class="op">==</span><span class="st"> </span><span class="dv">2</span>)),
-                        <span class="st">&quot;exact matches&quot;</span>),
-       <span class="dt">x =</span> <span class="st">&quot;Match Weight&quot;</span>,
-       <span class="dt">y =</span> <span class="st">&quot;Records&quot;</span>)<span class="op">+</span>
-<span class="st">    </span><span class="kw">theme</span>(<span class="dt">panel.background =</span>
-          <span class="kw">element_rect</span>(<span class="dt">fill =</span> <span class="st">&quot;white&quot;</span>,
-                       <span class="dt">colour =</span> <span class="st">&quot;grey50&quot;</span>))</code></pre></div>
+<pre class="r"><code># exclude LTAC and behavioral hospitals from match rate calculation
+ggplot(matched.final, aes(weight))+
+  geom_histogram(bins = 15,
+                 fill = &quot;#377EB8&quot;)+
+  labs(title = 
+         paste0(round(nrow(matched.final)/
+                        nrow(filter(alhosp,
+                                    !str_detect(Hospital,
+                                                &quot;Beha|Long Term|LTAC&quot;))),
+                             2)*100,
+                      &quot;% of records matched&quot;),
+       subtitle = paste(nrow(filter(matched.final, weight == 2)),
+                        &quot;exact matches&quot;),
+       x = &quot;Match Weight&quot;,
+       y = &quot;Records&quot;)+
+    theme(panel.background =
+          element_rect(fill = &quot;white&quot;,
+                       colour = &quot;grey50&quot;))</code></pre>
 <p><img src="match_files/figure-html/plot-1.png" width="576" /></p>
 
 

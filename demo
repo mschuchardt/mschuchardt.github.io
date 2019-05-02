@@ -1,0 +1,2086 @@
+---
+title: "Lead Conversion Model"
+subtitle: "Predicting leads likely to convert"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_float:
+        smooth_scroll: false
+---
+
+```{r setup,include=FALSE}
+
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      fig.width = 6,
+                      fig.height = 4)
+
+library(RForcecom)
+library(ranger)
+library(Boruta)
+library(tidygraph)
+library(ggraph)
+library(tidyverse)
+library(tidymodels)
+library(lubridate)
+
+# credentials
+source("/media/matt/st1000/r/functions/custid.R")
+# clean up api output
+source("/media/matt/st1000/r/functions/rforce_df.R")
+# list of 82 public email domains
+source("/media/matt/st1000/r/functions/public_domains.R")
+
+```
+
+```{r extract}
+#start clock
+start.time <- proc.time()
+
+api.date <- today()
+api.month <- as.character(month(api.date, 
+                                label = T, abbr = F))
+api.day <- as.character(day(api.date))
+api.time <- format(now(), "%H:%M %p %Z")
+
+api.label <- paste(api.month, api.day, "at", api.time)
+
+age.limit <- api.date %m-% years(2)
+
+# soql api call ---------
+obj.soql <- paste0(
+           "SELECT Id,
+            Title,
+            Email,
+            LeadSource,
+            Product_Service_Interest__c,
+            pi__campaign__c,
+            pi__score__c, 
+            pi__first_touch_url__c,
+            pi__first_activity__c,
+            pi__last_activity__c,
+            CreatedDate,
+            LastModifiedDate,
+            LastActivityDate,
+            Status,
+            IsConverted,
+            ConvertedDate FROM Lead WHERE
+            Status != 'Existing Opportunity'"
+            ) %>% 
+  str_remove_all(., "\\\n") %>% 
+  str_squish(.)
+ 
+# excute api call
+obj <- rforcecom.query(session, obj.soql) %>% 
+   rforce_df() %>% 
+  mutate(Closed = !is.na(ConvertedDate) |
+           IsConverted == T |
+           Status %in% c("Qualified",
+                         "Unqualified"),
+         Closed = ifelse(Status == "Open", F, Closed),
+         LastActivity =
+           case_when(!is.na(pi__last_activity__c) &
+                       !is.na(LastActivityDate) &
+                       pi__last_activity__c > 
+                       LastActivityDate ~  as_date(pi__last_activity__c),
+                     !is.na(pi__last_activity__c) &
+                       !is.na(LastActivityDate) &
+                       pi__last_activity__c < 
+                       LastActivityDate ~ as_date(LastActivityDate),
+                     !is.na(pi__last_activity__c) &
+                       is.na(LastActivityDate) ~ as_date(pi__last_activity__c),
+                     is.na(pi__last_activity__c) &
+                       !is.na(LastActivityDate) ~ as_date(LastActivityDate),
+                     is.na(pi__last_activity__c) &
+                       is.na(LastActivityDate) ~ as_date(LastModifiedDate),
+                     TRUE ~ as_date(LastActivityDate))) %>% 
+  filter(LastActivity >= as_date(age.limit))
+
+# feature engineering ----
+# create labels
+# create day variables
+# other indicator variables
+# extract email suffix
+# aggregate levels for variables with 30+ levels
+# via string detection
+objs <- obj %>% 
+  separate(Email,
+           c("drop", "domain"), 
+           sep = "@",
+           remove = F) %>% 
+  select(-drop) %>% 
+  mutate(label = case_when(Closed == T & 
+                             IsConverted == T |
+                             Status == "Qualified" ~
+                             "Yes",
+                             Closed == T &
+                             IsConverted == F |
+                             Status == "Unqualified" ~
+                             "No"),
+         label = factor(label, levels = c("Yes", "No")),
+         PublicDomain = ifelse(domain %in% public.domains, 
+                               "Yes", "No"),
+         PublicDomain = factor(PublicDomain),
+         KnownURL = 
+           ifelse(is.na(pi__first_touch_url__c), "No",
+                  "Yes"),
+         KnownURL = factor(KnownURL),
+         EmailSuffix =
+           as.character(str_extract_all(domain, 
+                                        "[.][A-z]{2,6}$")),
+          EmailSuffix =str_remove_all(EmailSuffix, "[.]"),
+         PardotScore = as.numeric(pi__score__c),
+         Age = 
+           ifelse(!is.na(ConvertedDate),
+                   as.numeric(ConvertedDate -
+                                CreatedDate),
+                as.numeric(lubridate::as_date(Sys.Date()) -
+                      CreatedDate)),
+         Age = ifelse(Age == 0, 1, Age),
+         ActivityDays = 
+           ifelse(!is.na(ConvertedDate),
+                    as.numeric(ConvertedDate - 
+                                 LastActivity),
+                as.numeric(lubridate::as_date(Sys.Date()) -
+                              LastActivity))) %>% 
+  select(-domain)
+
+# conversions ----
+# conversion rate by year
+conversions <- objs %>% 
+  mutate(Year = year(LastActivity),
+         label = fct_explicit_na(label)) %>% 
+  filter(Year >= lubridate::year(as_date(age.limit))) %>% 
+  group_by(Year, label) %>% 
+  summarize(Opportunities = n_distinct(Id)) %>%
+  group_by(Year) %>% 
+  mutate(Percent = Opportunities / sum(Opportunities)) %>% 
+  ungroup() %>% 
+  filter(Year < 2020)
+
+# wide conversion rate
+conversion.rate <- conversions %>% 
+  select(Year, label, Percent) %>% 
+  spread(label, Percent)
+
+# compute overall conversion rate
+overall.rate <- sum(conversion.rate$Yes, na.rm = T) /
+  (sum(conversion.rate$Yes, na.rm = T) + 
+     sum(conversion.rate$No, na.rm = T))
+
+
+# table of metrics ----
+metric.table <- tribble(
+  ~.metric, ~metric, ~details,
+  "f_meas", "F1 Score", "combination of precision and recall",
+  "j_index", "Youden's J", "sensitivity + specificity - 1",
+  "mcc", "Matthew`s Correlation", 
+  paste("correlation coefficient between",
+        "observed and predicted classifications"),
+  "kap", "Cohen's Kappa", "normalized accuracy measure",
+  "mn_log_loss", "Log Loss",
+  paste("accuracy measure accounting",
+          "for certainty of prediction"),
+  "accuracy", "Accuracy", "percent of correct classifications",
+  "bal_accuracy", "Balanced Accuracy",
+  "average of sensitivity and specificity",
+  "detection_prevalence", "Detection Prevalence", 
+  paste("the number of predicted",
+        "positive events divided",
+        "by the total number of",
+        "predictions"),
+  "gain_capture", "Gain Capture", "area under gain curve",
+  "ppv", "Positive Predictive Value",
+  paste("percent of positive predictions",
+        "that are  positive"),
+  "npv", "Negative Predictive Value",
+  paste("percent of negative predictions",
+        "that are negative"),
+  "pr_auc", "Precision Recall AUC", "area under PR curve",
+  "roc_auc", "ROC AUC", "area under ROC")
+
+# selection metric ----
+metric <- metric.table %>% 
+  filter(.metric == "bal_accuracy")
+
+# model variables ----------
+# label and id var names
+id.vars <- c("Id",
+             "label")
+
+# modeling table
+objs.model <- objs %>% 
+  select(Id,
+         CreatedDate,
+         Age,
+         ActivityDays,
+         PardotScore,
+         pi__campaign__c,
+         EmailSuffix,
+         Product_Service_Interest__c,
+         LeadSource,
+         Title,
+         PublicDomain,
+         KnownURL,
+         label) %>% 
+  arrange(CreatedDate)
+
+# training/testing records ----
+known.objs <- objs.model %>% 
+  filter(!is.na(label)) %>% 
+  select(-CreatedDate)
+
+# initial split ----
+# create holdout set
+initial.split <- rsample::initial_split(known.objs, 
+                                        prop = 3/4,
+                                        strata = "label")
+
+# cut training records
+training <- training(initial.split)
+```
+
+The workflow proposed by [Kuhn and Johnson (2019)](http://www.feat.engineering/) was
+implemented using [tidymodel](https://github.com/tidymodels) tools.
+
+Model development is completed inside a two-layer nested resampling scheme. This leads to a 
+more robust model, enhanced confidence in development decisions and increased computation time. To
+generate a single scoring run over 1,000 models will be fit to more than 100 distinct datasets.
+
+Using resampling to create multiple distinct training sets prevents **model overfitting**. 
+To reduce the risk of **overfitting predictors** features are engineered during each resample. Any 
+specious relationship between the predictors and outcome is unlikely to be propogated throughout the
+resamples. Measuring performance across a series of distinct resamples reduces the likelihood that 
+**performance estimates will be overly optimistic**.
+
+The performance measure used to select each model parameter was **`r metric$metric`**, computed as 
+`r metric$details`. Bayesian model analysis, as outlined by 
+[Benavoli et al (2017)](http://people.idsia.ch/~marco/papers/2017jmlr-tests.pdf), 
+was used to validate each selection.  
+
+```{r functions}
+
+# variable significance -----------
+# fit an intercept only logistic model
+# use add1 to fit single variable models for other predictors
+# select predictors that significantly improve deviance
+var_sig <- function(df, vrs){
+  .scp <- as.formula(paste("~", paste(vrs, collapse = "+")))
+  df <- mutate(df, label = ifelse(label == "Yes", 1, 0))
+  mdl <- glm(label ~ 1,
+             family = binomial(link = "logit"),
+             data = df)
+  add <- add1(mdl,
+              scope = .scp) %>% 
+    rownames_to_column("variable") %>% 
+    mutate(dev.imp = mdl$deviance - Deviance,
+           ptst = 1-pchisq(dev.imp, 1)) %>% 
+    filter(variable %in% vrs) %>% 
+    filter(ptst < 0.01) 
+  out <- add$variable
+  rm(mdl, df, .scp, add)
+  gc()
+  return(out)
+}
+
+# variable relevance ----
+# compare variable importance to importance achievable at random
+# via random forest
+# select variables deemed relevant
+var_rel <- function(df, form){
+  bor <- Boruta(form, df) %>% 
+    TentativeRoughFix()
+  out <- getSelectedAttributes(bor)
+  return(out)
+}
+
+# variable importance ----
+# use caret to calculate variable importance
+# select important variables
+var_imp <- function(df, .form){
+  mdl <- caret::train(.form, data = df, method = "glmnet")
+  imp <- caret::varImp(mdl)
+  imp <- imp$importance %>% 
+    rownames_to_column("vrs") %>% 
+    filter(Overall > 0)
+  out <- imp$vrs
+  return(out)
+}
+
+# combined variable importance ----
+final_imp <- function(df, vrs){
+  form <- as_formula(vrs)
+  .scp <- as.formula(paste("~", paste(vrs, collapse = "+")))
+  var.imp <- caret::train(form, data = df, method = "glmnet") %>% 
+    caret::varImp()
+  var.imp <- var.imp$importance %>% 
+    rownames_to_column("variable") %>% 
+    dplyr::select(variable, value = Overall)
+  var.rel <- Boruta(form, df) %>% 
+    TentativeRoughFix()
+  var.rel <- var.rel$ImpHistory %>% 
+    as_tibble() %>% 
+    gather(variable, value) %>% 
+    mutate(value = ifelse(!is.finite(value), 0, value)) %>% 
+    dplyr::group_by(variable) %>% 
+    dplyr::summarize(value = mean(value)) %>% 
+    ungroup() %>% 
+    dplyr::filter(is.finite(value)) %>% 
+    dplyr::filter(variable %in% vrs)
+  dat <- mutate(df, label = ifelse(label == "Yes", 1, 0))
+  mdl <- glm(label ~ 1,
+             family = binomial(link = "logit"),
+             data = dat)
+  add <- add1(mdl,
+              scope = .scp) %>% 
+    rownames_to_column("variable") %>% 
+    dplyr::mutate(dev.imp = mdl$deviance - Deviance,
+                  ptst = 1-pchisq(dev.imp, 1)) %>% 
+    dplyr::filter(variable %in% vrs) %>% 
+    dplyr::select(variable, value = dev.imp)
+  out <- var.rel %>% 
+    dplyr::mutate(selector = "Relevance") %>% 
+    bind_rows(var.imp %>% 
+                dplyr::mutate(selector = "Importance")) %>% 
+    bind_rows(add %>% 
+                dplyr::mutate(selector = "Significance")) %>% 
+    group_by(selector) %>% 
+    dplyr::mutate(value = value / max(value)) %>% 
+    ungroup()
+  return(out)
+}
+
+# level aggregation ----
+# most freq token
+token_freq <- function(x){
+tkns <- tokenizers::tokenize_word_stems(x,
+                                        stopwords = 
+                                          c("of", "the", "and"))
+tkn.freq <- table(unlist(tkns))
+for(i in seq_along(tkns)){
+  tkns[[i]] <- names(which.max(tkn.freq[tkns[[i]]]))[[1]]
+  tkns[[i]] <- ifelse(tkns[[i]] == "NA", NA, tkns[[i]])
+  tkns
+}
+return(unlist(tkns))
+}
+
+# bayes ttest ----
+# workhorse ----
+correlatedBayesianTtest <- function(diff_a_b,rho,rope_min,rope_max){
+  if (rope_max < rope_min){
+    stop("rope_max should be larger than rope_min")
+  }
+  
+  delta <- mean(diff_a_b)
+  n <- length(diff_a_b)
+  df <- n-1
+  stdX <- sd(diff_a_b)
+  sp <- sd(diff_a_b)*sqrt(1/n + rho/(1-rho))
+  p.left <- pt((rope_min - delta)/sp, df)
+  p.rope <- pt((rope_max - delta)/sp, df)-p.left
+  results <- list('left'=p.left,'rope'=p.rope,
+                  'right'=1-p.left-p.rope)
+  return (results)
+}
+
+# prep ------
+# by creating ab list
+pair_cross <- function(df, .grp){
+  crss <- as_tibble(list("a" = df[[.grp]],
+                         "b" = c(df[[.grp]][2:nrow(df)], NA))) %>% 
+    filter(!is.na(b))
+  return(crss)
+}
+
+# compute differences ----
+# and apply bayesian ttest  
+corr_bayes_test <- function(x, 
+                            df, 
+                            flds, 
+                            best,
+                            .ropemin = -0.01,
+                            .ropemax = 0.01){
+  out <- correlatedBayesianTtest(df[[best]] - df[[x]],
+                                 rho = flds,
+                                 rope_min = .ropemin,
+                                 rope_max = .ropemax)
+  return(out)
+}
+
+# execute ----
+# for entire ab list and label results
+bayes_ttest <- function(df.rank, .grp, df.summary, .flds){
+ crs <- pair_cross(df.rank, .grp)
+ a.b <- vector("list", nrow(crs))
+ for(i in 1:nrow(crs)){
+   a.b[[i]] <- corr_bayes_test(x = crs[[i,1]],
+                               df = df.summary,
+                               flds = 1/.flds,
+                               best = crs[[i,2]])
+ names(a.b[[i]]) <- c(paste(crs[[i,1]], 
+                                  ">",
+                                  crs[[i,2]]),
+                            paste(crs[[i,1]],
+                                  "=",
+                                  crs[[i,2]]),
+                            paste(crs[[i,1]], 
+                                  "<",
+                                  crs[[i,2]]))
+  a.b[[i]] <- a.b[[i]] %>% 
+    as_tibble()
+  a.b[[i]]
+ }
+ return(a.b)
+}
+
+ab_test <- function(df.rank, df.test, .met){
+  if(.met == "mn_log_loss"){
+    out <- bayes_ttest(df.rank, "model", df.test, 
+                        .flds = length(unique(df.test$id))) %>% 
+  map(., ~gather(., key, prob)) %>% 
+  bind_rows(.id = "pair") %>% 
+  mutate(equal.better = str_detect(key, "<"),
+         equal.worse = str_detect(key, ">")) %>%
+      group_by(pair) %>% 
+      mutate(rw = row_number()) %>% 
+      arrange(desc(rw), .by_group = T) %>% 
+  group_by(pair, equal.better) %>% 
+  mutate(combined = sum(prob)) %>% 
+    group_by(pair, equal.worse) %>% 
+  mutate(less = sum(prob)) %>% 
+  ungroup()%>% 
+  separate(key, c("better", "than"), 
+           sep = " > | = | <", remove = F) %>% 
+  mutate(better = str_trim(better, "both"),
+         than = str_trim(than, "both"))
+      return(out)
+  }else{
+    out <- bayes_ttest(df.rank, "model", df.test, 
+                        .flds = length(unique(df.test$id))) %>% 
+  map(., ~gather(., key, prob)) %>% 
+  bind_rows(.id = "pair") %>% 
+  mutate(equal.better = str_detect(key, "=|>"),
+         equal.worse = str_detect(key, "=|<")) %>% 
+  group_by(pair, equal.better) %>% 
+  mutate(combined = sum(prob)) %>% 
+    group_by(pair, equal.worse) %>% 
+  mutate(less = sum(prob)) %>% 
+  ungroup()%>% 
+  separate(key, c("better", "than"), 
+           sep = " > | = | <", remove = F) %>% 
+  mutate(better = str_trim(better, "both"),
+         than = str_trim(than, "both"))
+      return(out)
+  }
+}
+
+# helper functions ----
+# quiet fits ----
+# don't print model details to console
+q_f <- quietly(fit)
+
+# intersect 3 vectors
+triple_u <- function(x, y, z){
+  p1 <- as_tibble(list("vrs" = c(x,y,z))) %>% 
+    unique()
+  out <- unique(p1$vrs)
+  return(out)
+}
+
+# union 3 vectors
+triple_inter <- function(x, y, z){
+  p1 <- as_tibble(list("vrs" = c(x,y,z))) %>% 
+    mutate(n = 1) %>% 
+    group_by(vrs) %>% 
+    filter(n() == 3)
+  out <- unique(p1$vrs)
+  return(out)
+}
+
+# parsnip formula fitter ----
+# reorder arguments to use on list columns
+prs_form <- function(df, .form, prs){
+  out <- q_f(prs, .form, df)[["result"]]
+  return(out)
+}
+
+# recipe prepper ----
+# reorder arguments to use on list columns
+df_prep <- function(df, rec){
+  out <- prep(rec, df, strings_as_factors = F)
+  return(out)
+}
+
+# predictor ----
+# reorder arguments to use on list columns
+df_pred <- function(df, .fit, .type){
+  out <- predict(.fit, new_data = df, type = .type)
+}
+
+# formula creator ----
+# create formula from vector of variables
+as_formula <- function(.vrs, y.var = "label"){
+  out <- as.formula(paste(y.var, "~",
+                          paste(.vrs, collapse = "+")))
+  return(out)
+}
+
+# pads for unnesting
+df_pad <- function(df, x){
+  out <- df[x,]
+}
+
+# plot lines
+plot.grid <- as_tibble(list("grid" = seq(1.5, 4.5, 1)))
+
+zero.rw <- plot.grid[0,]
+
+prose_title <- function(a.b, .type, .same = zero.rw){
+  if(a.b[1,]$prob > 0.7){
+    paste0("The probability ",
+           a.b[1, ]$better,
+           " is the best ",
+           .type,
+           " is ",
+           round(a.b[1, ]$prob,2)*100,
+           "%")
+  }else{
+    if(nrow(.same) == 1){
+      paste0(a.b[1, ]$than,
+             " selects ",
+             round((.same[1,]$than.vrs/.same[1,]$better.vrs) *100),
+             "% fewer features than ",
+             a.b[1, ]$better,
+           "\nand the probability it performs as well or better is ",
+             round(.same$less[1],2)*100,
+             "%")
+    }else{
+      paste0("The probability ",
+             a.b[1, ]$better,
+             " performs as well or better\nthan ",
+             a.b[1, ]$than,
+             " is ",
+             round(a.b$combined[1],2)*100,
+             "%")
+    }
+  }
+}
+
+
+# plot folds ----
+plot_folds <- function(df, .tlt, .sbtlt){
+  p <- df %>% 
+    filter(.metric == metric$.metric) %>% 
+    ggplot(aes(id2, 
+               .estimate, 
+               group = fct_rev(fct_reorder(model,
+                                           .estimate,
+                                           .fun = mean)),
+               color = fct_rev(fct_reorder(model,
+                                           .estimate,
+                                           .fun = mean))))+
+    stat_summary(fun.y = "max",
+                geom = "point",
+                shape = 95,
+                size = 2.5,
+                stroke = 4,
+                position = position_dodge(width = 0.9))+
+    stat_summary(fun.y = "min",
+                geom = "point",
+                shape = 95,
+                size = 4,
+                stroke = 4,
+                position = position_dodge(width = 0.9))+
+    stat_summary(fun.data = "median_hilow",
+                geom = "linerange",
+                size = .75,
+                alpha = 1/2,
+                linetype = 3,
+                position = position_dodge(width = 0.9))+
+    geom_vline(data = plot.grid, aes(xintercept = grid),
+               color = "grey50",
+               size = 0.25)+
+    stat_summary(fun.data = "mean_cl_boot",
+                 geom = "line",
+                 position = position_dodge(width = 0.9))+
+    stat_summary(fun.data = "mean_cl_boot",
+                 geom = "point",
+                 position = position_dodge(width = 0.9))+
+    guides(color = guide_legend(title = NULL))+
+    scale_color_brewer(palette = "Set2")+
+    labs(title = paste(.tlt),
+         subtitle = paste(.sbtlt),
+         x = NULL,
+         y = paste(metric$metric))+
+    theme(panel.background =
+           element_rect(fill = NA,
+                        colour = "grey50"),
+          legend.key = element_rect(fill = "white"),
+          legend.key.size = unit(2, "lines"))
+  print(p)
+}
+
+# metric benchmarks -----
+metric_benchmark <- function(.met, .est){
+  out <- case_when(.met == "j_index" ~  .est / 0.5,
+                   .met %in% c("detection_prevalence", 
+                               "f_meas", 
+                               "kap",
+                               "mcc") ~ .est / 0.6,
+                  .met == "mn_log_loss" ~ (1 - .est) / 0.614,
+                  .met %in% c("gain_capture",
+                              "pr_auc") ~ .est / 0.7,
+                  .met %in% c("accuracy", 
+                              "bal_accuracy",
+                              "npv",
+                              "ppv",
+                              "precision",
+                              "recall",
+                              "roc_auc",
+                              "sens",
+                              "spec") ~ .est / 0.8)
+  return(out)
+}
+
+# compute summary metrics
+tune_summary <- function(df){
+  out <- df %>% 
+  conf_mat(truth = label, .pred_class) %>% 
+  mutate(summary = map(conf_mat, summary)) %>% 
+  ungroup() %>% 
+  select(id, id2, model, summary) %>% 
+  unnest() %>% 
+  bind_rows(folds.pred %>% 
+              mn_log_loss(truth = label, .pred_Yes)) %>% 
+  mutate(comp = metric_benchmark(.metric, .estimate))
+  return(out)
+}
+
+# rank based on selected metric
+tune_rank <- function(df, .met){
+  out <- df %>% 
+  filter(.metric == .met) %>% 
+  group_by(model, .metric) %>% 
+  summarize(.estimate = mean(.estimate)) %>% 
+  group_by(.metric) %>% 
+  mutate(rank = case_when(.metric ==
+                            "mn_log_loss" ~ dense_rank(.estimate),
+                          TRUE ~ dense_rank(desc(.estimate)))) %>% 
+  ungroup() %>% 
+  arrange(rank)
+  return(out)
+}
+
+# prepare for bayes ttest
+tune_test <- function(df, .met){
+  out <- df %>% 
+  filter(.metric == .met) %>% 
+  select(id, id2, model, .metric, .estimate) %>% 
+  spread(model, .estimate, fill = 0) %>% 
+  arrange(.metric, id, id2)
+  return(out)
+}
+
+# table of nice model names ----
+model.labels <- tribble(
+  ~model, ~long, ~type,
+  "RF", "Random Forest", "Bagged ensemble of decision trees",
+  "SVM", "Support Vector Machine", "Kernelized linear approximation",
+  "XGB", "Xtreme Gradient Boosting", 
+  "Boosted ensemble of decision trees")
+
+# table of feature selectors ----
+feature.selectors <- tribble(
+  ~Name, ~Details,
+  "All", "Filters for correlation, colinearity and variance",
+  "Importance", 
+  "Absolute value of coefficents from fitted glmnet model",
+  "Relevance", "Importance versus importance achievable at random",
+  "Significance", 
+  "Significant improvement over intercept only model",
+  "Exclusive",
+  "Variables in Importance & Relevance & Significance selections",
+  "Inclusive", 
+  "Variables in Importance or Relevance or Significance selections"
+  )
+
+```
+
+
+## Nested Resamples  
+`r nrow(known.objs)` records were used for model development with `r round((nrow(known.objs)-nrow(training))/nrow(known.objs),2)*100`%
+ heldout from training for validation.  
+
+```{r splits}
+
+# resamples ----
+# external ----
+# create external folds
+folds.external <- rsample::vfold_cv(training,
+                                    v = 5,
+                                    repeats = 1,
+                                    strata = "label") 
+
+# extract df of external folds
+analysis.external <- folds.external$splits %>% 
+  map(., as.data.frame, data = "analysis")
+
+assess.external <- folds.external$splits %>% 
+  map(., as.data.frame, data = "assessment")
+
+# internal ----
+# create internal folds
+folds.internal.mdl <- rsample::vfold_cv(analysis.external[[1]],
+                                        v = 5,
+                                        repeats = 10,
+                                        strata = "label") 
+
+folds.internal.vrs <- rsample::vfold_cv(analysis.external[[2]],
+                                        v = 5,
+                                        repeats = 10,
+                                        strata = "label") 
+
+folds.internal.tn <- rsample::vfold_cv(analysis.external[[3]],
+                                        v = 5,
+                                        repeats = 1,
+                                        strata = "label") 
+
+fold.size <- tibble::tribble(
+  ~"Set", ~"Size",
+  "Known", nrow(known.objs),
+  "Train", nrow(training),
+  "Holdout", nrow(rsample::testing(initial.split)),
+  "Analysis", map(folds.internal.mdl$splits,
+                  as.data.frame,
+                  data = "analysis") %>% 
+    map_dbl(., nrow) %>% 
+    mean() %>% 
+    round(),
+  "Assessment", map(folds.internal.mdl$splits,
+                  as.data.frame,
+                  data = "assessment") %>% 
+    map_dbl(., nrow) %>% 
+    mean() %>% 
+    round())
+
+```
+
+**External Resamples** The `r nrow(training)` training records were resampled, creating
+5 cross-validation folds.
+
+**Internal Resamples** `r nrow(folds.internal.mdl[[1]][[1]][[1]])` records in each 
+external fold were repeatedly resampled, creating 10 repeats of 5 fold cross-validation
+sets, each containing `r nrow(folds.internal.tn[[1]][[1]][[1]])` records.
+
+**Final Model** The selected parameters were used to fit the final model to all 
+`r nrow(training)` training records and then validated against the
+`r nrow(rsample::testing(initial.split))` record holdout set.
+
+A simplified diagram of the resampling scheme is below.  
+```{r nested,results="asis",cache=TRUE}
+# draw resampling diagram  
+DiagrammeR::grViz("digraph nested_resamples 
+{
+
+  # a 'graph' statement
+  graph [overlap = true, fontsize = 10]
+
+  # several 'node' statements
+  node [shape = egg,
+        fontname = Helvetica,
+        label = 'Known Records']
+  Known 
+
+  node [shape = circle,
+        color = DarkBlue,
+        fill = SeaShell,
+        label = 'Training Set']
+  Train 
+
+  node [shape = oval,
+        fontcolor = DarkSlateGray,
+        fill = LightCyan,
+        label = 'Holdout Set']
+  Test 
+  
+  node [shape = plaintext,
+        fontcolor = DarkBlue,
+        label = 'External Resample']
+  External1; ExternalA
+
+  node [shape = rectangle,
+        fontcolor = SteelBlue,
+        color = SteelBlue,
+        label = 'Classifier Selection']
+  Fold1
+
+  node [shape = rectangle,
+        fontcolor = SlateBlue,
+        color = SlateBlue,
+        label = 'Feature Selection']
+  FoldA 
+
+  node [shape = plaintext,
+        fontcolor = SteelBlue,
+        color = SteelBlue,
+        label = 'Internal Resamples']
+  Internal1
+
+  node [shape = plaintext,
+        fontcolor = SlateBlue,
+        color = SlateBlue,
+        label = 'Internal Resamples']
+  InternalA 
+
+  node [shape = circle,
+        fontcolor = SteelBlue,
+        color = SteelBlue,
+        fill = SeaShell,
+        label = 'Analysis']
+  train1; train2
+  
+  node [shape = circle,
+        fontcolor = SlateBlue,
+        color = SlateBlue,
+        fill = SeaShell,
+        label = 'Analysis']
+  trainA; trainB
+
+  node [shape = oval,
+        fontcolor = DarkSlateGray,
+        color = SteelBlue,
+        fill = LightCyan,
+        label = 'Assessment']
+  test1; test2
+
+  node [shape = oval,
+        fontcolor = DarkSlateGray,
+        color = SlateBlue,
+        fill = LightCyan,
+        label = 'Assessment']
+  testA; testB
+
+  subgraph {
+    rank = same; Test; Train;
+  }
+
+  subgraph {
+    rank = same; External1; ExternalA;
+  }
+
+  subgraph {
+    rank = same; Fold1; FoldA;
+  }
+
+  subgraph {
+    rank = same; Internal1; InternalA;
+  }
+  
+  subgraph {
+    rank = same; train1; test1; train2; test2; 
+                 trainA; testA, trainB; testB;
+  }
+
+  # several 'edge' statements
+  Known->Test [arrowhead = none]
+  Known->Train
+  Train->Test[arrowhead = diamond]
+  Train->{External1 ExternalA}[arrowhead = none]
+  External1->Fold1
+  ExternalA->FoldA
+  Fold1->Internal1 [color = SteelBlue, arrowhead = none]
+  Internal1->{train1 train2} [color = SteelBlue]
+  Internal1->{test1 test2}[color = SteelBlue,arrowhead = none]
+  FoldA->InternalA [color = SlateBlue, arrowhead = none]
+  InternalA->{trainA trainB} [color = SlateBlue]
+  InternalA->{testA testB}[color = SlateBlue,arrowhead = none]
+  train1->test1 [color = SteelBlue, arrowhead = diamond]
+  train2->test2 [color = SteelBlue, arrowhead = diamond]
+  trainA->testA [color = SlateBlue, arrowhead = diamond]
+  trainB->testB [color = SlateBlue, arrowhead = diamond]
+}
+")
+
+```
+
+# Parameters {.tabset .tabset-pills}    
+```{r design,cache=TRUE}
+
+vrs.numeric <- colnames(training)[sapply(training, is.numeric)]
+
+vrs.levels <- setdiff(colnames(training)[sapply(training, is.character)],
+                      c("Id", "label"))
+
+# recipes ----------
+# recipe for all variables
+# use NUM to identify actual numeric variables
+# create polynomials, interactions & dummy variables
+rec.all <- recipe(label ~ ., data = training) %>% 
+  update_role(Id, new_role = "id.var") %>% 
+  step_modeimpute(all_nominal(), 
+                  -all_outcomes(),
+                  -Id) %>% 
+  step_mutate(Title = token_freq(Title)) %>% 
+  step_mutate(Product_Service_Interest__c =
+                token_freq(Product_Service_Interest__c)) %>% 
+  step_mutate(LeadSource = token_freq(LeadSource)) %>% 
+  step_other(all_nominal(),
+             threshold = 0.05,
+             other = "Other",
+             -all_outcomes(), 
+             -Id) %>% 
+  step_knnimpute(all_numeric(), 
+                 neighbors = 3, 
+                 -all_outcomes()) %>% 
+  step_dummy(all_nominal(), 
+             -all_outcomes(), -Id) %>% 
+  step_interact(terms = ~ 
+                  one_of(vrs.numeric):contains("_")) %>% 
+  step_poly(one_of(vrs.numeric),
+            options = list(degree = 4),
+            -all_outcomes(),
+            -Id) %>% 
+  step_lincomb(all_predictors(),
+               -all_outcomes(), -Id) %>% 
+  step_zv(all_predictors(),
+          -all_outcomes(), -Id) %>% 
+  step_nzv(all_predictors(),
+           -all_outcomes(), -Id) %>% 
+  step_corr(all_predictors(), 
+            threshold = 0.7,
+            method = "pearson",
+            -all_outcomes(), -Id) %>% 
+  step_center(all_predictors(),
+              -all_outcomes(), -Id) %>% 
+  step_scale(all_predictors(),
+             -all_outcomes(), -Id) 
+
+# parsnip model setup ------------
+
+# rf specification
+prs.rf <- rand_forest(mode = "classification",
+                      mtry = .preds(),
+                      trees = 2000) %>% 
+  set_engine("ranger",
+             importance = "impurity",
+             probability = TRUE)
+
+# svm specification
+prs.svm <- svm_rbf(mode = "classification") %>% 
+  set_engine("kernlab",
+             kernel = "rbfdot",
+             prob.model = T)
+
+# xgb specification
+prs.xgb <- boost_tree(mode = "classification") %>% 
+  set_engine("xgboost",
+             prob.model = T)
+
+
+# list of parsnip model specs
+models <- list("RF" = prs.rf,
+               "SVM" = prs.svm,
+               "XGB" = prs.xgb)
+
+```
+
+## Features 
+
+The following steps were applied individually to each internal
+resample:  
+
+  1. The most frequent value was used to impute missing
+  categorical variables  
+  2. Rare categorical responses were grouped into an 'other'
+  category  
+  3. Categorical variables were contrast coded into numeric
+  predictors   
+  4. Nearest neighbor was used to impute missing numeric variables  
+  5. Two-way interactions were created between dummy categorical
+  predictors and numeric predictors  
+  6. Fourth degree polynomial predictors were created from the 
+  numeric variables  
+  7. Filters were applied to remove predictors:
+    - with no variance   
+    - with sparse or unbalanced responses  
+    - that were highly correlated  
+    - with multicollinearity  
+  8. Predictors were centered and scaled  
+
+## Tuning   {.tabset}  
+
+### Classifier  
+`r nrow(model.labels)` classifiers under consideration.  
+```{r classifierSelect}
+
+# resample analysis ----
+# apply recipe to analysis set of each fold individually
+# add columns with analysis and assessment data to split
+# prep analysis and assessment sets
+folds.internal <- folds.internal.mdl %>% 
+  mutate(analysis = map(splits, as.data.frame, data = "analysis"),
+         assessment =  map(splits, as.data.frame, 
+                           data = "assessment"),
+         prep = map(analysis, df_prep, rec = rec.all),
+         analysis = map2(prep, analysis, bake),
+         assessment = map2(prep, assessment, bake),
+         form = map(prep, formula)) %>% 
+  select(-splits) 
+
+# add formula for each fold
+# fit each model to analysis set of each fold individually
+# generate predictions for assessment set
+folds.internal <- folds.internal %>% 
+  mutate(RF = map2(analysis, form, prs_form, 
+                   prs = models[["RF"]]),
+         RF = map2(RF, assessment, predict, type = "prob"),
+         SVM = map2(analysis, form, prs_form, 
+                    prs = models[["SVM"]]),
+         SVM = map2(SVM, assessment, predict, type = "prob"),
+         XGB = map2(analysis, form, prs_form, 
+                    prs = models[["XGB"]]),
+         XGB = map2(XGB, assessment, predict, type = "prob")) %>% 
+  mutate(truth = map(assessment, ~select(., Id, label))) %>% 
+  select(id, id2, truth, RF, SVM, XGB) %>% 
+  gather(model, preds, -c(id, id2, truth))
+
+# to unnest list columns, df list-elements need equal rows
+# get rows to pad by list element
+pads <- map_dbl(folds.internal$truth, nrow)
+pads <- max(pads) - pads
+
+# pad df
+pad.df <- as_tibble(list("Id" = "0"))
+
+# list of df to pad truth column
+pads.id <- map(pads, df_pad, df = pad.df)
+
+# list of df to pad prediction columns
+pad.df <- as_tibble(list(".pred_Yes" = 0))
+pads.pd <- map(pads, df_pad, df = pad.df)
+
+# evenup rows
+# gather and unnest
+# add naive class
+# drop padding
+# drop models that fail to predict both outcomes
+folds.pred <- folds.internal %>% 
+   mutate(truth = map2(truth, pads.id, bind_rows),
+          preds = map2(preds, pads.pd, bind_rows)) %>% 
+  unnest() %>% 
+  mutate(.pred_class = ifelse(.pred_Yes > .pred_No, "Yes",
+                              "No"),
+         .pred_class = factor(.pred_class, levels = c("Yes",
+                                                      "No"))) %>% 
+  filter(Id != "0") %>% 
+  filter(!is.na(.pred_class)) %>% 
+  group_by(id, id2, model) %>% 
+  mutate(classes = n_distinct(.pred_class)) %>% 
+  ungroup() %>% 
+  filter(classes == 2) %>% 
+  group_by(model) %>% 
+  mutate(folds = max(row_number())) %>% 
+  ungroup() %>% 
+  group_by(id, id2, model) 
+
+classifier.summary <- tune_summary(folds.pred)
+
+class.rank <- tune_rank(classifier.summary, .met = metric$.metric)
+
+class.test <- tune_test(classifier.summary, .met = metric$.metric)
+
+# bayes ttest
+class.ab <- ab_test(class.rank, class.test, .met = metric$.metric) %>% 
+  left_join(model.labels %>% 
+              select(better = model,
+                     b = long)) %>% 
+  left_join(model.labels %>% 
+              select(than = model,
+                     w = long))
+
+# selected classifier
+classifier <- class.rank[class.rank$rank == 1, ]$model
+
+# plot titles
+class.title <- paste0(model.labels[model.labels$model ==
+                                     classifier,]$long,
+                      " averaged ",
+                      ifelse(metric$.metric == "mn_log_loss",
+                             round(class.rank[class.rank$rank == 1,
+                                       ]$.estimate, 3),
+                             round(class.rank[class.rank$rank == 1,
+                                       ]$.estimate, 3) *100),
+                      "% ",
+                      str_to_lower(metric$metric))
+                      
+class.subtitle <- prose_title(class.ab, .type = "classifier")
+
+# model specs
+classifier.spec <- models[[classifier]]
+
+plot_folds(classifier.summary, class.title, class.subtitle)
+
+```
+
+### Feature Selection  
+`r model.labels[model.labels$model == classifier,]$long` model was
+fit to `r nrow(feature.selectors)` different subsets of features.  
+```{r featureselection}
+ # this chunk takes a while
+# split folds
+# prep recipe on analysis set for each fold
+folds.internal <- folds.internal.vrs %>% 
+  mutate(analysis = map(splits,
+                        as.data.frame, data = "analysis"),
+         assessment =  map(splits, as.data.frame, 
+                           data = "assessment"),
+         prep = map(analysis, df_prep, rec = rec.all)) %>% 
+  select(-splits)
+
+# bake analysis and assessment sets
+# run feature selection methods
+# make long
+folds.internal <- folds.internal %>% 
+  mutate(analysis = map2(prep, analysis, bake),
+         assessment = map2(prep, assessment, bake),
+         All = map(analysis, colnames),
+         All = map(All, setdiff, c("Id", "label")),
+         Importance = map2(analysis, map(prep, formula), var_imp),
+         Relevance = map2(analysis, map(prep, formula), var_rel),
+         Significance = map2(analysis, All, var_sig),
+         Exclusive = pmap(list(Importance, Relevance, Significance),
+                          triple_inter),
+         Inclusive = pmap(list(Importance, Relevance, Significance),
+                          triple_u)) %>%  
+  select(-prep) %>% 
+  gather(fs, forms, -c(id, id2, analysis, assessment))
+
+# fit models and predict assessment sets
+folds.internal <- folds.internal %>% 
+    mutate(vrs = map(forms, length)) %>% 
+    filter(vrs > 0) %>% 
+    mutate(forms = map(forms, as_formula),
+           fits = map2(analysis, forms, prs_form,
+                            prs = classifier.spec),
+           preds = map2(fits,  assessment, predict,
+                           type = "prob"))
+
+# average vars selected by each fs
+folds.vrs <- folds.internal %>% 
+  select(fs, vrs) %>% 
+  unnest() %>% 
+  group_by(fs) %>% 
+  summarize(vrs = round(mean(vrs)))
+
+# to unnest list columns, df list-elements need equal rows
+# get rows to pad by list element
+pads <- map_dbl(folds.internal$preds, nrow)
+pads <- max(pads) - pads
+
+# pad df
+pad.df <- as_tibble(list("Id" = "0"))
+
+# list of df to pad truth column
+pads.id <- map(pads, df_pad, df = pad.df)
+
+# list of df to pad prediction columns
+pad.df <- as_tibble(list(".pred_Yes" = 0))
+pads.pd <- map(pads, df_pad, df = pad.df)
+
+# evenup rows
+# gather and unnest
+# add naive class
+# drop padding
+folds.pred <- folds.internal %>% 
+  mutate(truth = map(assessment, ~select(., Id, label))) %>% 
+  select(id, id2, model = fs, truth, preds) %>% 
+  mutate(truth = map2(truth, pads.id, bind_rows),
+         preds = map2(preds, pads.pd, bind_rows)) %>% 
+  unnest() %>% 
+  mutate(.pred_class = ifelse(.pred_Yes > .pred_No, "Yes",
+                              "No"),
+         .pred_class = factor(.pred_class, levels = c("Yes",
+                                                      "No"))) %>% 
+  filter(Id != "0") %>% 
+  filter(!is.na(.pred_class)) %>% 
+  group_by(id, id2, model) %>% 
+  mutate(classes = n_distinct(.pred_class)) %>% 
+  ungroup() %>% 
+  filter(classes == 2) %>% 
+  group_by(model) %>% 
+  mutate(folds = max(row_number())) %>% 
+  ungroup() %>% 
+  filter(folds > (max(folds) * 0.7)) %>% 
+  group_by(id, id2, model) 
+
+fs.summary <- tune_summary(folds.pred)
+
+fs.rank <- tune_rank(fs.summary, .met = metric$.metric)
+
+fs.test <- tune_test(fs.summary, .met = metric$.metric)
+
+# ttest
+fs.ab <- ab_test(fs.rank, fs.test, .met = metric$.metric)
+
+# if second feature selection method performs similar to first
+# and has less variables 
+# select second fs
+fs.same <- fs.ab %>% 
+  filter(pair == 1) %>% 
+  left_join(folds.vrs %>% 
+              select(than = fs,
+                     than.vrs = vrs)) %>% 
+  left_join(folds.vrs %>% 
+              select(better = fs,
+                     better.vrs = vrs)) %>% 
+  mutate(smaller = than.vrs <better.vrs) %>% 
+  arrange(desc(prob)) %>% 
+  mutate(.metric = metric$.metric) %>% 
+  filter(.metric == "mn_log_loss" &
+           row_number() == 3 |
+          .metric != "mn_log_loss" &
+           row_number() == 1) %>%  
+  filter(str_detect(key, "=") &
+           smaller == T ) 
+  
+# plot title
+fs.subtitle <- prose_title(fs.ab, 
+                        .same = fs.same, 
+                        .type = "feature selector")
+
+# selected fs
+fs <- ifelse(nrow(fs.same) == 1, 
+             fs.same$than,
+             fs.rank[fs.rank$rank == 1, ]$model)
+
+fs.title <- paste0("Average ",
+                      str_to_lower(metric$metric),
+                      " of ",
+                      ifelse(metric$.metric == "mn_log_loss",
+                             round(fs.rank[fs.rank$rank == 1,
+                                       ]$.estimate, 3),
+                             round(fs.rank[fs.rank$rank == 1,
+                                       ]$.estimate, 3) *100),
+                   "%")
+
+# plot
+plot_folds(fs.summary, fs.title, fs.subtitle)
+
+```
+
+ 
+### Hyperparameters   
+
+```{r tuneSelect}
+
+folds.internal <-folds.internal.tn %>% 
+        mutate(analysis = map(splits,
+                        as.data.frame, data = "analysis"),
+               assessment = map(splits, as.data.frame, 
+                                 data = "assessment"),
+               prep = map(analysis, df_prep, rec = rec.all),
+               analysis = map2(prep, analysis, bake),
+               assessment = map2(prep, assessment, bake),
+               Formula = map(prep, formula),
+               vrs = map(analysis, ~select(., -Id, -label)),
+               vrs = map(vrs, colnames))
+
+# apply selected fs
+folds.internal <- if(fs == "Importance"){
+       folds.internal %>% 
+         select(-splits) %>% 
+         mutate(vrs = map2(analysis, Formula, var_imp),
+                form = map(vrs, as_formula)) %>% 
+         select(-Formula)
+      }else{
+        if(fs == "Inclusive"){
+          folds.internal %>% 
+            select(-splits) %>% 
+            mutate(Importance =  map2(analysis, Formula, var_imp),
+                   Relevance = map2(analysis, Formula, var_rel),
+                   Significance = map2(analysis, vrs, var_sig),
+                   vrs = pmap(list(Importance,
+                                   Relevance, 
+                                   Significance), 
+                              triple_u),
+                   form = map(vrs, as_formula)) %>% 
+            select(-Formula)
+          }else{
+            if(fs == "Exclusive"){
+              folds.internal %>% 
+                select(-splits) %>% 
+                mutate(Importance =  map2(analysis, Formula, var_imp),
+                       Relevance = map2(analysis, Formula, var_rel),
+                       Significance = map2(analysis, vrs, var_sig),
+                       vrs = pmap(list(Importance,
+                                       Relevance, 
+                                       Significance),
+                                  triple_inter),
+                       form = map(vrs, as_formula))
+              }else{
+                if(fs == "Relevance"){
+                  folds.internal %>% 
+                    select(-splits) %>% 
+                    mutate(vrs = map2(analysis, Formula, var_rel),
+                           form = map(vrs, as_formula)) %>% 
+                    select(-Formula)
+                  }else{
+                    if(fs == "Significance"){
+                      folds.internal %>% 
+                        select(-splits, -Formula) %>% 
+                        mutate(vrs = map2(analysis, vrs, var_sig),
+                              form = map(vrs, as_formula))
+                      }else{
+                        folds.internal %>% 
+                          mutate(form = Formula) %>% 
+                          select(-splits, -Formula)
+                      }
+    }
+    }
+    }
+}
+
+
+# number of predictors
+tn.cls <- map_dbl(folds.internal$vrs, length)
+
+# tuning parameter grid by model
+tune.grid <- list(
+  "RF" = grid_random(mtry %>% 
+                     range_set(c(floor(sqrt(min(tn.cls))),
+                                            min(tn.cls))),
+                              min_n %>% 
+                               range_set(c(1,4)),
+                             size = 9),
+  "SVM" = grid_random(cost, 
+                      rbf_sigma,
+                      size = 9),
+   "XGB" = grid_random(tree_depth, 
+                       learn_rate %>% 
+                       range_set(c(0.1, 0.5)),
+                       size = 9)
+                  )
+
+
+# clean model specs to merge with tuning parameters
+raw.mdls <- list(
+  "RF" = rand_forest(mode = "classification",
+                     mtry = varying(),
+                     min_n = varying(),
+                     trees = 2000) %>% 
+                   set_engine("ranger",
+                              importance = "impurity",
+                              probability = TRUE) %>% 
+                   merge(tune.grid[["RF"]]),
+  "SVM" = svm_rbf(mode = "classification",
+                           rbf_sigma = varying(),
+                           cost = varying()) %>% 
+                   set_engine("kernlab",
+                              kernel = "rbfdot",
+                              prob.model = T) %>% 
+                   merge(tune.grid[["SVM"]]),
+  "XGB" = boost_tree(mode = "classification",
+                              mtry = .preds(),
+                              learn_rate = varying(),
+                              tree_depth = varying()) %>% 
+                   set_engine("xgboost",
+                              prob.model = T) %>% 
+                   merge(tune.grid[["XGB"]])
+  )
+
+
+# selected model with tuning grid
+# add on original model spec
+prs.mdls <- c(raw.mdls[[classifier]],
+              list(models[[classifier]]))
+
+# fit to resamples, looping over tuning grid
+tunes <- vector("list", length(prs.mdls))
+for(i in(seq_along(prs.mdls))){
+  tunes[[i]] <- folds.internal %>% 
+    mutate(fit = map2(analysis, form, prs_form,
+                      prs = prs.mdls[[i]]),
+           fit = map2(fit, assessment, predict, type = "prob"),
+           truth = map(assessment, ~select(., Id, label))) %>% 
+    select(starts_with("id"), truth, fit)
+  tunes
+}
+
+# bind rows of output
+tunes <- bind_rows(tunes, .id = "model")
+
+# to unnest list columns, df list-elements need equal rows
+# get rows to pad by list element
+pads <- map_dbl(folds.internal$truth, nrow)
+pads <- max(pads) - pads
+
+# pad df
+pad.df <- as_tibble(list("Id" = "0"))
+
+# list of df to pad truth column
+pads.id <- map(pads, df_pad, df = pad.df)
+
+# list of df to pad prediction columns
+pad.df <- as_tibble(list(".pred_Yes" = 0))
+pads.pd <- map(pads, df_pad, df = pad.df)
+
+# apply hard class
+tunes <- tunes %>% 
+      mutate(truth = map2(truth, pads.id, bind_rows),
+             fit = map2(fit, pads.pd, bind_rows)) %>% 
+      unnest() %>% 
+      mutate(.pred_class = ifelse(.pred_Yes > .pred_No, "Yes", "No"),
+             .pred_class = factor(.pred_class,
+                              levels = c("Yes", "No"))) %>% 
+      filter(Id != "0")
+
+# summary metrics
+tunes.summary <- tunes %>% 
+      group_by(model, id) %>% 
+      mutate(classes = n_distinct(.pred_class)) %>% 
+      ungroup() %>% 
+      filter(classes > 1) %>% 
+      group_by(id, model) %>% 
+      conf_mat(truth = label, .pred_class) %>% 
+      mutate(summary = map(conf_mat, summary)) %>% 
+      select(starts_with("id"), model, summary) %>% 
+      unnest()%>% 
+      bind_rows(tunes %>% 
+                  group_by(model, id) %>% 
+                  mn_log_loss(truth = label, .pred_Yes)) %>% 
+       mutate(comp = metric_benchmark(.metric, .estimate))
+
+# rank tunes
+tunes.rank <- tune_rank(tunes.summary, .met = metric$.metric)
+
+# prep for ttest
+tunes.test <- tunes.summary %>% 
+      select(starts_with("id"), model, .metric, .estimate) %>% 
+      filter(model %in% tunes.rank$model) %>% 
+      filter(.metric == metric$.metric) %>% 
+      spread(model, .estimate, fill = 0) %>% 
+      arrange(id)
+
+# ttest
+tunes.ab <- ab_test(tunes.rank, tunes.test, .met = metric$.metric)
+
+# selected tune
+hyperparameters <-as.numeric(tunes.rank[tunes.rank$rank ==
+                                         1,]$model)[1]
+
+tune.prose <- paste0(length(prs.mdls),
+        " candidate hyperparameter combinations were",
+        " considered.\n",
+        "The probability the selected hyperparameters outperform", 
+        " the other options considered: ",
+        round(tunes.ab[1,]$combined,2)*100,
+        "%")
+
+```
+
+`r tune.prose`.
+
+
+# Model {.tabset}  
+```{r test,cache=TRUE}
+
+# prep entire training set
+prep.resample <- prep(rec.all, training, strings_as_factors = F) 
+
+# bake training set
+train <- bake(prep.resample, training)
+
+# bake test set
+test <- bake(prep.resample, testing(initial.split))
+
+# bake scoring set
+score <- bake(prep.resample, filter(objs.model, is.na(label)))
+
+# get all univariate predictors
+train.all <-  summary(prep.resample) %>% 
+  filter(role == "predictor") %>% 
+  select(variable) %>% 
+  unlist()
+
+# apply fs
+train.vrs <- if(fs == "Importance"){
+  out <- var_imp(train, formula(prep.resample))
+}else{
+  if(fs == "Relevance"){
+    out <- var_rel(train, formula(prep.resample))
+  }else{
+    if(fs == "Significance"){
+      out <- var_sig(train, train.all)
+      }else{
+        if(fs == "Exclusive"){
+            imp <- var_imp(train, formula(prep.resample))
+            br <- var_rel(train, formula(prep.resample))
+            sg <- var_sig(train, train.all)
+            out <- intersect(intersect(imp, br), intersect(br, sg))
+        }else{
+          if(fs == "Inclusive"){
+            imp <- var_imp(train, formula(prep.resample))
+            br <- var_rel(train, formula(prep.resample))
+            sg <- var_sig(train, train.all)
+            out <- union(imp, union(br, sg))
+          }else{
+        train.all
+        }
+        }
+      }
+  }
+}
+
+# create formula
+train.form <- as.formula(paste("label", "~", 
+                               paste(train.vrs, collapse = "+")))
+
+# fit model
+fits <- q_f(prs.mdls[[hyperparameters]],
+            train.form,
+            train)[["result"]]
+
+# generate test predictions
+test.preds <- test %>% 
+  nest(-c(Id, label)) %>% 
+  mutate(probs = map(data, df_pred, .fit = fits,
+                     .type = "prob")) %>% 
+  select(Id, label, probs) %>% 
+  unnest() %>% 
+  mutate(.pred_class = ifelse(.pred_Yes > .pred_No, "Yes", "No"),
+         .pred_class = factor(.pred_class, 
+                              levels = c("Yes", "No"))) %>% 
+  inner_join(objs %>% 
+               select(Id, CreatedDate, LastActivity)) %>% 
+  mutate(Correct = ifelse(label == .pred_class, "Yes", "No"),
+         YearCreated = lubridate::year(CreatedDate),
+         YearActivity = lubridate::year(LastActivity),
+         SameYear = YearCreated == YearActivity)
+
+# generate new predictions
+preds <- score %>% 
+  nest(-c(Id, label)) %>%
+  mutate(probs = map(data, df_pred, .fit = fits, .type = "prob"),
+         classes = map(data, df_pred,
+                       .fit = fits, .type = "class")) %>% 
+  select(Id, label, probs) %>% 
+  unnest() %>% 
+  mutate(.pred_class = ifelse(.pred_Yes > .pred_No, "Yes", "No"),
+         .pred_class = factor(.pred_class, 
+                              levels = c("Yes", "No"))) %>% 
+  inner_join(objs %>% 
+               select(Id, CreatedDate, LastActivity)) %>% 
+  mutate(Decile = floor(10 * (.pred_Yes / max(.pred_Yes))),
+         Decile = ifelse(Decile == 10, 9, Decile))
+
+# test auc
+test.auc <- test.preds %>% 
+  roc_auc(truth = label, .pred_Yes)
+
+# summary metrics
+# summary metrics
+test.metrics <- test.preds %>% 
+  conf_mat(truth = label, .pred_class) %>% 
+  summary() %>% 
+  bind_rows(test.preds %>% 
+              gain_capture(truth = label, .pred_Yes)) %>%
+  bind_rows(test.preds %>% 
+              pr_auc(truth = label, .pred_Yes)) %>%
+  bind_rows(test.preds %>% 
+              roc_auc(truth = label, .pred_Yes)) %>%
+  bind_rows(test.preds %>% 
+              mn_log_loss(truth = label, .pred_Yes)) %>% 
+  filter(!.metric %in% c("sens", "spec", "recall", "precision")) %>% 
+  mutate(Rate = (nrow(test.preds[test.preds$label == "Yes",]) /
+                   nrow(test.preds)),
+         DetectionRate = nrow(test.preds[test.preds$label == "Yes" &
+                                   test.preds$.pred_class ==
+                                   "Yes",]) / (nrow(test.preds) * 2),
+         comp = metric_benchmark(.metric, .estimate),
+         .estimate = round(.estimate, 3)) %>% 
+  inner_join(metric.table) %>% 
+  mutate(good = case_when(comp < 0.95 ~ "No",
+                          comp < 1.1 ~ "Yes",
+                          comp >= 1.1 ~ "Great"))
+
+vrs.prose <- ifelse(fs != "All",
+                    paste(length(train.vrs), 
+                          "of",
+                          length(train.all),
+                          "predictors selected",
+                          "by the",
+                          fs,
+                          "filter"),
+                    paste(length(train.vrs),
+                          "predictors"))
+
+```
+**Final Model:**
+`r model.labels[model.labels$model == classifier,]$long` using 
+`r vrs.prose`.   
+  
+
+## Accuracy {.tabset .tabset-pills}  
+
+### By year  
+
+```{r testplots}
+# plot accuracy by year
+test.preds %>% 
+  mutate(YearCreated = factor(YearCreated)) %>% 
+  group_by(YearCreated, Correct) %>% 
+  summarize(n = n()) %>% 
+  group_by(YearCreated) %>% 
+  mutate(total = sum(n)) %>% 
+  ungroup() %>% 
+  mutate(rate = ifelse(Correct == "No" & total > 1, "",
+                       paste0(round(n / total, 2)*100, "%")),
+         clr = ifelse(total <= 3, "ble", "whte"),
+         nudge = ifelse(total <= 3, 1.5, -1.5)) %>%
+  ggplot(aes(x = YearCreated, y = n))+
+  geom_col(aes(fill = fct_rev(Correct)),
+           color = "#FFFFFF")+
+  geom_text(aes(x = YearCreated,
+                y = total + nudge, 
+                color = clr,
+                label = rate),
+            size = 6,
+            fontface = "bold",
+            show.legend = F)+
+  scale_fill_manual(values = c("Yes" = "#377EB8",
+                                "No" = "#E41A1C"))+
+  scale_color_manual(values = c("whte" = "#FFFFFF",
+                                "ble" = "#132B43"))+
+  guides(fill = guide_legend(title = "Correct"))+
+  labs(title = paste0("Test Prediction Accuracy: ",
+                         round(test.metrics[test.metrics$.metric ==
+                                              "accuracy",
+                                            ]$.estimate, 2)*100,
+                         "%"),
+       x = "Year Lead Created",
+       y = "Predictions")+
+  theme(panel.background =
+          element_rect(fill = "white",
+                       colour = "grey50"))
+
+```
+
+### Confusion Matrix  
+
+```{r confmat}
+
+# plot confusion matrix
+conf_mat(test.preds, label, .pred_class)[[1]] %>% 
+  as_tibble() %>% 
+  ggplot(aes(Prediction, Truth))+
+  geom_tile(aes(alpha = n,
+                fill = n),
+            show.legend = F,
+            color = "grey50")+
+  geom_text(aes(label = n,
+                color = n),
+            size = 8,
+            show.legend = F,
+            fontface = "bold")+
+  labs(title = paste("Confusion Matrix:",
+                     nrow(test.preds[test.preds$Correct == "Yes",]),
+                     "of",
+                     nrow(test.preds),
+                     "test records correctly classified"))+
+  scale_y_discrete(limits = c("No", "Yes"))+
+  scale_x_discrete(limits = c("Yes", "No"))+
+  scale_color_continuous(low = "#56B1F7", high = "#132B43")+
+  scale_fill_continuous(low = "#132B43", high = "#56B1F7")+
+  theme(panel.background =
+          element_rect(fill = "white",
+                       colour = "grey50"),
+        axis.text = element_text(size = rel(1.2)))
+
+```
+
+## Performance Curves  {.tabset .tabset-pills}  
+
+### ROC Curve
+```{r roccurve}
+# plot performance curves
+test.preds %>% 
+  roc_curve(truth = label, .pred_Yes) %>% 
+  autoplot()+
+  geom_text(data = test.metrics %>% 
+              filter(.metric == "j_index"),
+            aes(label = paste0(metric, ": ", .estimate),
+                color = good,
+                x = 0.65,
+                y = 0.2),
+            size = 6,
+            fontface = "bold",
+            show.legend = F)+
+  scale_color_manual(values = c("Yes" = "#377EB8",
+                                "No" = "#E41A1C",
+                                "Great" =  "#4DAF4A"))+
+  labs(title = paste0("Area under curve",
+                        ": ",
+                        test.metrics[test.metrics$.metric ==
+                                       "roc_auc",]$.estimate),
+       x = "1 - Sensitivity",
+       y = "Specificity")+
+  theme(panel.background =
+          element_rect(fill = "white",
+                       colour = "grey50"),
+        axis.text = element_text(size = rel(1)),
+        panel.grid = element_blank(),
+        plot.subtitle = element_text(size = rel(1.2)))
+
+```
+
+### Precision Recall Curve
+```{r prcrv}
+
+test.preds %>% 
+  pr_curve(truth = label, .pred_Yes) %>% 
+  autoplot()+
+  geom_text(data = test.metrics %>% 
+              filter(.metric == "f_meas"),
+            aes(label = paste0(metric, ": ", .estimate),
+                color = good,
+                x = 0.3,
+                y = 0.2),
+            size = 6,
+            fontface = "bold",
+            show.legend = F)+
+  scale_color_manual(values = c("Yes" = "#377EB8",
+                                "No" = "#E41A1C",
+                                "Great" =  "#4DAF4A"))+
+  labs(title = paste0("Area under curve",
+                        ": ",
+                        test.metrics[test.metrics$.metric ==
+                                       "pr_auc",]$.estimate),
+       x = "Recall",
+       y = "Precision")+
+  coord_fixed(ratio = 1, ylim = c(0,1))+
+  theme(panel.background =
+          element_rect(fill = "white",
+                       colour = "grey50"),
+        axis.text = element_text(size = rel(1)),
+        panel.grid = element_blank(),
+        plot.subtitle = element_text(size = rel(1.2)))
+        
+```
+
+### Gain Curve   
+```{r gaincurve}
+
+test.preds %>% 
+  gain_curve(truth = label, .pred_Yes) %>% 
+  autoplot()+
+  geom_text(data = test.metrics %>% 
+              filter(.metric == "mcc"),
+            aes(label = paste0(metric, ": ", .estimate),
+                color = good,
+                x = 70,
+                y = 20),
+            size = 6,
+            fontface = "bold",
+            show.legend = F)+
+  scale_color_manual(values = c("Yes" = "#377EB8",
+                                "No" = "#E41A1C",
+                                "Great" =  "#4DAF4A"))+
+  labs(title = paste0("Gain Capture",
+                           ": ",
+                        test.metrics[test.metrics$.metric ==
+                                       "gain_capture",]$.estimate))+
+  theme(panel.background =
+          element_rect(fill = "white",
+                       colour = "grey50"),
+        axis.text = element_text(size = rel(1)),
+        panel.grid = element_blank(),
+        plot.subtitle = element_text(size = rel(1.2)))
+
+```
+
+### Lift  
+```{r lift}
+
+test.preds %>% 
+  lift_curve(truth = label, .pred_Yes) %>% 
+  autoplot()+
+  geom_text(data = test.metrics %>% 
+              filter(.metric == "mn_log_loss"),
+            aes(label = paste0(metric, ": ", .estimate),
+                color = good,
+                x = 25,
+                y = 1.35),
+            size = 6,
+            fontface = "bold",
+            show.legend = F)+
+  scale_color_manual(values = c("Yes" = "#377EB8",
+                                "No" = "#E41A1C",
+                                "Great" =  "#4DAF4A"))+
+  labs(title = paste0("Balanced Accuracy",
+                           ": ",
+                        test.metrics[test.metrics$.metric ==
+                                       "bal_accuracy",]$.estimate))+
+  theme(panel.background =
+          element_rect(fill = "white",
+                       colour = "grey50"),
+        axis.text = element_text(size = rel(1)),
+        panel.grid = element_blank(),
+        plot.subtitle = element_text(size = rel(1.2)))
+
+```
+
+
+## Training Improvement
+```{r}
+
+train.summary <- tunes.summary %>% 
+  rename(id2 = id) %>% 
+  mutate(id = "Repeat01",
+         set = "Hyperparameters") %>% 
+  bind_rows(fs.summary %>% 
+              mutate(set = "Features")) %>% 
+  bind_rows(classifier.summary %>% 
+              mutate(set = "Classifiers")) %>% 
+  left_join(test.metrics %>% 
+              select(.metric, test = .estimate)) %>% 
+  filter(!is.na(test)) %>% 
+  mutate(better = ifelse(.metric == "mn_log_loss",
+                         .estimate < test,
+                         .estimate > test),
+         selected = model %in% c(classifier,
+                                 fs,
+                                 hyperparameters),
+         set = factor(set, levels = c("Classifiers",
+                                      "Features",
+                                      "Hyperparameters"),
+                      ordered = T))
+
+train.imp <- train.summary %>% 
+  group_by(set, selected, .metric) %>% 
+  summarise(better = mean(better)) %>% 
+  ungroup() %>% 
+  spread(set, better) %>% 
+  mutate(improve = Classifiers < Features |
+           Features < Hyperparameters,
+         Test = !Classifiers %in% c(0,1) |
+           !Features %in% c(0,1) |
+           !Hyperparameters %in% c(0,1)) %>% 
+  filter(.metric == metric$.metric)
+  
+train.summary %>% 
+  filter(.metric == metric$.metric) %>% 
+  group_by(set) %>% 
+  ggplot(aes(set,
+             .estimate, 
+             color = set))+
+  geom_violin(scale = "count", show.legend = F)+
+  geom_hline(aes(yintercept = test.metrics[test.metrics$.metric ==
+                                             metric$.metric,]$.estimate),
+             color = "blue")+
+  scale_color_brewer(palette = "Set1")+
+  labs(title = ifelse(train.imp$Test == T,
+                      paste("Test Performance inline", 
+                            "with Resampling Performance"),
+                      paste("Test Performance overly optimistic")),
+       subtitle = ifelse(train.imp$improve == T,
+                         paste("Model refinement validates", 
+                               "performance estimate"),
+                         paste("Model did not improve")),
+       x = NULL,
+       y = paste(metric$metric))+
+  theme(panel.background = element_rect(fill = "white",
+                                        colour = "grey50"),
+        legend.key = element_rect(fill = "white"))
+  
+```
+
+# Scores {.tabset .tabset-pills}  
+
+```{r predPlot,cache=TRUE}
+
+# compute lift by decile
+mdl.lift.decile <- test.preds %>%
+  yardstick::lift_curve(truth = label, .pred_Yes) %>% 
+  filter(!is.na(.lift)) %>% 
+  mutate(Percent = 100 - .percent_tested) %>% 
+  arrange(desc(Percent)) %>% 
+  mutate(Decile = 
+           floor(Percent / 10)) %>%
+  group_by(Decile) %>% 
+  filter(.lift == max(.lift)) %>% 
+  filter(n() == 1 |
+           n() > 1 &
+           .n == min(.n)) %>% 
+  select(Decile, .lift) %>% 
+  unique() %>% 
+  arrange(desc(Decile))
+
+# prediction analysis ----
+# counts
+pred.counts <- preds %>% 
+  group_by(.pred_class) %>% 
+  summarize(Leads = n_distinct(Id)) %>% 
+  ungroup() %>% 
+  left_join(conversions %>% 
+              ungroup() %>% 
+              filter(Year == 2019) %>% 
+              select(.pred_class = label,
+                     Percent)) %>% 
+  mutate(Expected =
+           round(Percent *nrow(score)))
+
+```
+
+## Range of Predicted Values   
+
+```{r predrange,cache=TRUE}
+# bucket predictions by probability and plot
+preds %>% 
+  mutate(Strength = case_when(.pred_Yes >= 0.8 ~ "Strong",
+                              .pred_Yes >= 0.6 ~ "Potential",
+                              .pred_Yes >= 0.4 ~ "Uncertain",
+                              .pred_Yes >= 0.2 ~ "Unlikely",
+                              .pred_Yes >= 0.0 ~ "Weak"),
+         Strength = factor(Strength, levels = c("Strong",
+                                                "Potential",
+                                                "Uncertain",
+                                                "Unlikely",
+                                                "Weak"))) %>% 
+ggplot(aes(.pred_Yes, fill = Strength))+
+  geom_histogram(breaks = seq(0, 1, 0.1),
+                 color = "#FFFFFF")+
+  scale_fill_manual(values = c("Weak" = "#E41A1C",
+                               "Unlikely" = "#FB6A4A",
+                               "Uncertain" = "grey60",
+                               "Potential" = "#377EB8",
+                               "Strong" = "#08519C"))+
+  scale_x_continuous(breaks = seq(0, 1, 0.2),
+                     labels = as.character(seq(0, 1, 0.2)))+
+  guides(fill = guide_legend(title = NULL))+
+  labs(title = paste("Range of conversion probabilities for",
+                      nrow(preds),
+                      "leads"),
+       x = "Probability",
+       y = "Predictions")+
+  theme(panel.background =
+          element_rect(fill = "white",
+                       colour = "grey50"))
+
+```
+
+## Increasing Conversion Rate    
+```{r benefitPlot,cache=TRUE}
+
+top.deciles <- c(10, 9, 8)
+
+# calculate improvement using by decile lift
+pred.score.deciles <- preds %>% 
+  mutate(Decile = ntile(row_number(), 10)) %>% 
+  group_by(Decile) %>% 
+  summarize(Leads = n()) %>% 
+  ungroup() %>% 
+  arrange(desc(Decile)) %>% 
+  mutate(.n = cumsum(Leads)) %>% 
+  mutate(Decile = Decile - 1)
+
+# expected conversion rate
+decile.expected <- pred.score.deciles %>% 
+  mutate(expected.range = 
+             map(Leads,
+      function(x){out <- x *
+        conversion.rate[conversion.rate$Percent >
+                          min(conversion.rate$Percent),
+                                             ]$Percent})) %>%
+  unnest() %>% 
+  group_by(Decile) %>% 
+  mutate(expected.range = floor(expected.range),
+         order = row_number()) %>%
+  group_by(order) %>% 
+  arrange(desc(Decile), .by_group = T) %>% 
+  mutate(.n_events = cumsum(expected.range)) %>% 
+  group_by(.n) %>% 
+  mutate(.n_min = min(.n_events),
+            .n_max = max(.n_events),
+            .n_events = floor(median(.n_events))) %>% 
+  bind_rows(tribble(
+   ~Decile, ~.n, ~.n_min, ~.n_max, ~.n_events,
+    10, 0, 0, 0, 0
+  )) %>% 
+  select(Decile, .n, .n_min, .n_events, .n_max) %>% 
+  ungroup() %>% 
+  mutate(type = "Expected") %>% 
+  unique() %>% 
+  arrange(.n)
+
+decile.predicted <- decile.expected %>% 
+  select(Decile, starts_with(".n")) %>% 
+  gather(key, value, -c(Decile, .n)) %>% 
+  left_join(mdl.lift.decile) %>% 
+  mutate(Expected = floor(value *.lift)) %>% 
+  select(Decile, .n, key, Expected) %>% 
+  spread(key, Expected) %>% 
+  filter(!is.na(.n_events)) %>% 
+  bind_rows(tribble(
+    ~Decile, ~.n, ~.n_events, ~.n_min, ~.n_max,
+    10, 0, 0, 0, 0
+  )) %>% 
+  select(Decile, .n, .n_min, .n_events, .n_max) %>% 
+  ungroup() %>% 
+  mutate(type = "Predicted") %>% 
+  unique() %>% 
+  arrange(.n)
+
+# plot axis labels
+ax <- decile.predicted[decile.predicted$Decile %in%
+                         top.deciles, ]$.n
+
+# prep to plot
+decile.lift <- decile.expected %>% 
+  bind_rows(decile.predicted) %>% 
+  group_by(type) %>% 
+  arrange(.n, .by_group = T) %>% 
+  mutate(gap = .n_events - lag(.n_events)) %>% 
+  group_by(Decile) %>% 
+  mutate(gap = min(gap)) %>% 
+  ungroup() %>% 
+  mutate(ndg = 1.5) %>% 
+  filter(Decile %in% top.deciles)
+
+conv.imp <- decile.expected %>% 
+  filter(.n_events < max(decile.lift$.n_events)) %>% 
+  filter(.n_events == max(.n_events))
+
+decile.title <- 
+  paste0("Tesing indicates ",
+          round(mean(mdl.lift.decile[mdl.lift.decile$Decile %in%
+                         top.deciles,]$.lift)),
+                       "x lift for the top ",
+                       (length(top.deciles) - 1)*10,
+                          "% ")
+                       
+decile.subtitle <- 
+  paste("The",
+          max(decile.predicted[decile.predicted$Decile %in%
+                                              top.deciles, ]$.n),
+        "highest scoring leads",
+        "should deliver\nthe same", 
+        "conversions as",
+        conv.imp$.n,
+        "leads")
+
+
+```
+`r decile.title`.
+
+
+# R {.tabset}  
+
+## Session Info  
+```{r session}
+# session info
+print(sessionInfo())
+
+```
+
